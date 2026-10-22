@@ -131,7 +131,7 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `Q` | Fecha | `main.cpp` | CG-54 | em uso |
 | `W` `A` `S` `D` + mouse | Anda e olha | `main.cpp` | CG-55, CG-68 | em uso |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce | `main.cpp` | CG-55 | em uso |
-| `1`, `2`–`9` | Inspeção: sala inteira / cada alvo, na ordem de registro em `Classroom`. Hoje `2` = cubo, `3` = objeto articulado e `4` = ventilador; com os objetos reais, a ordem da [tabela de objetos](ARQUITETURA.md#objetos-da-sala). Cabem 8 alvos | `scene/classroom` | CG-55, CG-87, CG-59 | em uso |
+| `1`, `2`–`9` | Inspeção: sala inteira / cada alvo, na ordem de registro em `Classroom`. Hoje `2` = cubo, `3` = objeto articulado, `4` = ventilador e `5` = cadeira; com os objetos reais, a ordem da [tabela de objetos](ARQUITETURA.md#objetos-da-sala). Cabem 8 alvos | `scene/classroom` | CG-55, CG-87, CG-59, CG-60 | em uso |
 | `T` | Tela retrátil: abre / recolhe | `scene/classroom` | CG-75 | reservada |
 | `V` | Ventilador: liga / desliga | `scene/classroom` | CG-76 | reservada |
 | `P` | Projetor: liga / desliga | `scene/classroom` | CG-77 | reservada |

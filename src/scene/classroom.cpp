@@ -59,6 +59,14 @@ Classroom::Classroom()
     const glm::vec3 fanEye = glm::vec3(fanPlacement * glm::vec4(0.48f, 0.40f, 1.10f, 1.0f));
     const glm::vec3 fanCenter = glm::vec3(fanPlacement * glm::vec4(0, 0.13f, 0.23f, 1.0f));
     targets_.push_back({"ventilador", &fan, fanEye, fanCenter});  // tecla 4; preserva 2 e 3
+
+    // Demonstração no piso livre, à frente dos outros objetos; posição provisória só da cena.
+    glm::mat4 chairPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.35f, 0.0f, 1.05f));
+    chairPlacement = glm::rotate(chairPlacement, glm::radians(-20.0f), glm::vec3(0, 1, 0));
+    const SceneNode& chair = chair_.addTo(root_, chairPlacement);
+    const glm::vec3 chairEye = glm::vec3(chairPlacement * glm::vec4(0.72f, 0.80f, 0.98f, 1.0f));
+    const glm::vec3 chairCenter = glm::vec3(chairPlacement * glm::vec4(0.0f, 0.42f, -0.03f, 1.0f));
+    targets_.push_back({"cadeira", &chair, chairEye, chairCenter});  // tecla 5; preserva 2, 3 e 4
 }
 
 void Classroom::update(const Input& /*input*/, float /*deltaTime*/) {

@@ -78,11 +78,11 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `A` / `D` | Move para a esquerda / direita |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce no eixo Y do mundo |
 | Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
-| `1` / `2` / `3` / `4` | Inspeção: cena completa / cubo isolado / objeto articulado isolado / ventilador isolado |
+| `1` / `2` / `3` / `4` / `5` | Inspeção: cena completa / cubo isolado / objeto articulado isolado / ventilador isolado / cadeira isolada |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`4`) funciona mesmo assim. Ao perder o foco,
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`5`) funciona mesmo assim. Ao perder o foco,
 o cursor é liberado e é preciso clicar de novo.
 
 <!-- CG-81 (Sprint 3): interações (tela retrátil, ventilador, projetor) e a inspeção de cada objeto. -->
@@ -92,6 +92,14 @@ A origem local é a fixação na parede, com frente +Z. `Classroom` define seu p
 `objects::Fan::setRotorAngle(graus)` gira só pás e tampa, sem reconstruir geometria. A tecla `V` e a animação
 ficam para a CG-76. Até os materiais por peça (CG-72), ele usa a mesma textura UV provisória da cena;
 grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
+
+A cadeira escolar (CG-60, tecla `5`) tem assento de 0,40 × 0,40 m com topo a 0,45 m, placas de 0,018 m
+e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares de raio
+0,011 m (16 segmentos), quadro sob o assento, travessas inferiores e dois montantes sustentam as placas;
+sapatas e fixações discretas completam a estrutura. O pivô fica no chão entre as pernas, com frente +Z.
+`objects::Chair::addTo` permite várias instâncias com os mesmos meshes; a posição provisória fica em `Classroom`.
+As medidas comuns à carteira da CG-62 estão no novo `include/objects/furniture_style.hpp`.
+Até a CG-72, permanece a textura UV provisória: metal cinza-escuro e madeira laminada serão materiais por peça.
 
 ## Estrutura
 
