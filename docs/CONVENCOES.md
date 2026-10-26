@@ -132,7 +132,7 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `W` `A` `S` `D` + mouse | Anda e olha | `main.cpp` | CG-55, CG-68 | em uso |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce | `main.cpp` | CG-55 | em uso |
 | `1`, `2`–`9`, `0` | Inspeção: sala inteira / os nove primeiros alvos, preservados. `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor, `7` = mesa do professor, `8` = tela retrátil, `9` = projetor, `0` = lixeira | `scene/classroom` | CG-55, CG-87, CG-62, CG-59, CG-63, CG-64, CG-66, CG-65, CG-67 | em uso |
-| `[` / `]` | Inspeção: alvo anterior / próximo, em ciclo por todos os alvos (hoje dez; cadeira após a lixeira), sem limite de teclas numéricas | `scene/classroom` | CG-60 | em uso |
+| `[` / `]` | Inspeção: alvo anterior / próximo, em ciclo por todos os alvos (hoje onze; cadeira após a lixeira e quadro ao final), sem limite de teclas numéricas | `scene/classroom` | CG-60, CG-61 | em uso |
 | `T` | Tela retrátil: abre / recolhe | `scene/classroom` | CG-75 | reservada |
 | `V` | Ventilador: liga / desliga | `scene/classroom` | CG-76 | reservada |
 | `P` | Projetor: liga / desliga | `scene/classroom` | CG-77 | reservada |
@@ -140,7 +140,7 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `L` | Luz: liga / desliga | `scene/classroom` | CG-73 | reservada |
 
 As seleções funcionam com o cursor livre e reenquadram a câmera. Após uma tecla numérica, `[` e `]` continuam
-do alvo selecionado. Da sala inteira, `]` seleciona o primeiro alvo (carteira) e `[` o último (cadeira);
+do alvo selecionado. Da sala inteira, `]` seleciona o primeiro alvo (carteira) e `[` o último (quadro, 11º alvo);
 o ciclo retorna do último ao primeiro e vice-versa. A tecla `1` restaura a cena completa.
 
 ## 9. Texturas

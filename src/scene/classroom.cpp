@@ -126,6 +126,14 @@ Classroom::Classroom()
     const glm::vec3 chairEye = glm::vec3(chairPlacement * glm::vec4(0.72f, 0.80f, 0.98f, 1.0f));
     const glm::vec3 chairCenter = glm::vec3(chairPlacement * glm::vec4(0.0f, 0.42f, -0.03f, 1.0f));
     targets_.push_back({"cadeira", &chair, chairEye, chairCenter});
+
+    // Quadro (CG-61): centro da fixação na parede, bordas a 0,90 e 2,10 m do chão.
+    // Corpo/moldura ficam atrás da lona; bandeja e acessórios abaixo da ponta da tela aberta.
+    // Posição provisória até a CG-69: geometria e enquadramento acompanham somente este placement.
+    const glm::mat4 boardPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, kFrontWallZ));
+    const SceneNode& board = board_.addTo(root_, boardPlacement);
+    targets_.push_back({"quadro", &board, toWorld(boardPlacement, {0.85f, 0.65f, 3.10f}),
+                        toWorld(boardPlacement, {0.0f, -0.03f, 0.04f})});  // 11º alvo, após a cadeira: [ e ]
 }
 
 void Classroom::update(const Input& /*input*/, float /*deltaTime*/) {

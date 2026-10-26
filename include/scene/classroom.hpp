@@ -9,6 +9,7 @@
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 #include "gfx/texture.hpp"
+#include "objects/board.hpp"
 #include "objects/chair.hpp"
 #include "objects/student_desk.hpp"
 #include "objects/fan.hpp"
@@ -49,7 +50,7 @@ public:
     void update(const Input& input, float deltaTime);
 
     // Tecla 1 mostra a sala inteira; 2 a 9 e 0 preservam os nove primeiros alvos.
-    // [ e ] percorrem todos os alvos em ciclo (hoje dez, com a cadeira no fim), mesmo com cursor livre.
+    // [ e ] percorrem todos os alvos em ciclo (hoje onze, com o quadro no fim), mesmo com cursor livre.
     // Reenquadra a câmera, que depois continua livre. Retorna true se reenquadrou neste frame
     // (o chamador não aplica movimento pendente).
     bool handleInspection(const Input& input, Camera& camera);
@@ -88,6 +89,7 @@ private:
     objects::Projector projector_;
     objects::TrashCan trashCan_;
     objects::Chair chair_;
+    objects::Board board_;
 
     SceneNode root_;
     std::vector<InspectionTarget> targets_;
