@@ -75,11 +75,15 @@ void addTube(MeshData& data, const glm::vec3& start, const glm::vec3& end, float
     glm::mat4 transform = glm::translate(glm::mat4(1.0f), start);
 
     // Girar em torno de up x direction (perpendicular aos dois) pelo ângulo entre eles leva up
-    // até direction, pela regra da mão direita. Tubo em pé: o produto vetorial é nulo e não gira.
+    // até direction, pela regra da mão direita.
     const glm::vec3 axis = glm::cross(up, direction);
     if (glm::length(axis) > 1e-6f) {
         const float angle = std::acos(glm::clamp(glm::dot(up, direction), -1.0f, 1.0f));
         transform = glm::rotate(transform, angle, glm::normalize(axis));
+    } else if (direction.y < 0.0f) {
+        // Tubo para baixo: up e direction são opostos e o produto vetorial também é nulo. Qualquer
+        // eixo perpendicular a up serve; 180° em X leva +Y para -Y. Tubo para cima: não gira.
+        transform = glm::rotate(transform, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     }
 
     const float length = glm::length(end - start);
