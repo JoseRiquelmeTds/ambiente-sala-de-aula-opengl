@@ -85,8 +85,8 @@ conjunto:
 - **Estrutura em tubo metálico:** cilindros de **raio 0,011 m** (tubo de 22 mm), **16 segmentos**, mesma cor/material
   de metal. Travessas são o mesmo cilindro girado 90°.
 - **Tampo e assento/encosto em placa:** caixas finas (**0,018 m**, MDF) com o mesmo material de madeira ou laminado.
-- As medidas e materiais compartilhados ficam num header só, `include/objects/furniture_style.hpp`, criado por quem
-  chegar primeiro e usado pelos dois objetos:
+- As medidas compartilhadas ficam num header só, `include/objects/furniture_style.hpp`, integrado pela CG-62 e
+  usado por `StudentDesk` e `Chair`, sem duplicar constantes:
 
 ```cpp
 namespace objects::furniture {
@@ -131,12 +131,17 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `Q` | Fecha | `main.cpp` | CG-54 | em uso |
 | `W` `A` `S` `D` + mouse | Anda e olha | `main.cpp` | CG-55, CG-68 | em uso |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce | `main.cpp` | CG-55 | em uso |
-| `1`, `2`–`9` | Inspeção: sala inteira / cada alvo, na ordem de registro em `Classroom`. Hoje `2` = cubo, `3` = objeto articulado, `4` = ventilador e `5` = cadeira; com os objetos reais, a ordem da [tabela de objetos](ARQUITETURA.md#objetos-da-sala). Cabem 8 alvos | `scene/classroom` | CG-55, CG-87, CG-59, CG-60 | em uso |
+| `1`, `2`–`9`, `0` | Inspeção: sala inteira / os nove primeiros alvos, preservados. `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor, `7` = mesa do professor, `8` = tela retrátil, `9` = projetor, `0` = lixeira | `scene/classroom` | CG-55, CG-87, CG-62, CG-59, CG-63, CG-64, CG-66, CG-65, CG-67 | em uso |
+| `[` / `]` | Inspeção: alvo anterior / próximo, em ciclo por todos os alvos (hoje dez; cadeira após a lixeira), sem limite de teclas numéricas | `scene/classroom` | CG-60 | em uso |
 | `T` | Tela retrátil: abre / recolhe | `scene/classroom` | CG-75 | reservada |
 | `V` | Ventilador: liga / desliga | `scene/classroom` | CG-76 | reservada |
 | `P` | Projetor: liga / desliga | `scene/classroom` | CG-77 | reservada |
 | `←` / `→` | Slide anterior / próximo | `scene/classroom` | CG-77 (opcional) | reservada |
 | `L` | Luz: liga / desliga | `scene/classroom` | CG-73 | reservada |
+
+As seleções funcionam com o cursor livre e reenquadram a câmera. Após uma tecla numérica, `[` e `]` continuam
+do alvo selecionado. Da sala inteira, `]` seleciona o primeiro alvo (carteira) e `[` o último (cadeira);
+o ciclo retorna do último ao primeiro e vice-versa. A tecla `1` restaura a cena completa.
 
 ## 9. Texturas
 

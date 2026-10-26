@@ -5,8 +5,9 @@ Como o código está organizado, quem depende de quem e **onde colocar cada cois
 vértice) em [CONVENCOES.md](CONVENCOES.md).
 
 > [!NOTE]
-> A pasta `objects/` e o `gfx/material` ainda não existem: nascem com o primeiro objeto da Sprint 1 e com a CG-72.
-> Por enquanto `scene/classroom` monta a cena de exemplo da estrutura de mesh (piso, cubo e objeto articulado).
+> O `gfx/material` ainda não existe: nasce com a CG-72. Por enquanto `scene/classroom` monta a cena de exemplo da
+> estrutura de mesh (piso e objeto articulado) e os objetos da Sprint 1 já modelados, em posição provisória até a
+> sala (CG-69).
 
 ## Sumário
 
@@ -32,7 +33,7 @@ deltaTime = ...                              main.cpp       segundos, limitado a
 update(...)                                  main.cpp       atalhos globais (Q, Esc, captura do cursor)
   ├─ classroom.update(input, deltaTime)      scene/         teclas das interações -> métodos dos objetos
   │    └─ fan.update(deltaTime) ...          objects/       animação de cada objeto
-  ├─ classroom.handleInspection(input, cam)  scene/         teclas 1-9: isola um alvo e reenquadra a câmera
+  ├─ classroom.handleInspection(input, cam)  scene/         teclas 1-9, 0, [, ]: inspeção e enquadramento
   └─ camera.rotate(...) / camera.move(...)   core/camera    navegação, só com o cursor capturado
 renderer::draw(camera, root, texture)        gfx/renderer   shader, matrizes view/projeção, desenha a árvore
 glfwSwapBuffers(window);
@@ -230,7 +231,7 @@ objects::Fan fan_;
 glm::mat4 fanPlacement = glm::translate(glm::mat4(1.0f), {3.9f, 2.4f, -1.0f});
 fanPlacement = glm::rotate(fanPlacement, glm::radians(-90.0f), {0.0f, 1.0f, 0.0f});
 const SceneNode& fan = fan_.addTo(root_, fanPlacement);
-targets_.push_back({"ventilador", &fan, {2.5f, 2.0f, 0.0f}, {3.9f, 2.4f, -1.0f}});  // tecla = posição na lista + 2
+targets_.push_back({"ventilador", &fan, {2.5f, 2.0f, 0.0f}, {3.9f, 2.4f, -1.0f}});  // alvos após o nono: [ e ]
 
 // src/scene/classroom.cpp, em Classroom::update
 if (input.keyPressed(GLFW_KEY_V)) {
@@ -316,10 +317,33 @@ com a proporção atual do framebuffer e suspende o desenho quando a largura ou 
 na câmera. O movimento combinado é normalizado e usa `deltaTime`; o delta do mouse **não** usa
 `deltaTime`. Não há colisões, gravidade ou limite de deslocamento.
 
-A inspeção fica em `scene::Classroom` (CG-87): `1` mostra a sala inteira e `2` a `9` isolam cada alvo registrado, na
-ordem da lista (hoje `2` = cubo e `3` = objeto articulado). Funciona com a janela em foco, mesmo com o cursor livre, e
-restaura um enquadramento para cada alvo; tecla sem alvo é ignorada. Depois a câmera continua livre. A perda de foco libera o cursor e exige
-novo clique para retomar a navegação; com o cursor livre não há movimento nem rotação pelo mouse.
+A inspeção fica em `scene::Classroom` (CG-87, CG-60): `1` mostra a sala inteira. Os nove atalhos existentes ficam
+preservados: `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor,
+`7` = mesa do professor, `8` = tela retrátil, `9` = projetor e `0` = lixeira. A cadeira é registrada depois deles,
+como décimo alvo. `[` e `]` percorrem qualquer quantidade de alvos com retorno circular; após uma seleção numérica,
+continuam desse alvo. Da cena inteira, `]` vai ao primeiro e `[` ao último. `currentInspection_` começa em
+`kWholeScene` e só muda quando `selectInspection()` aceita uma seleção, junto com o isolamento e o enquadramento.
+Funciona com a janela em foco, mesmo com o cursor livre; índice sem alvo é ignorado. Depois a câmera continua livre.
+A perda de foco libera o cursor e exige novo clique para retomar a navegação; com o cursor livre não há movimento
+nem rotação pelo mouse.
+
+### Projetor e tela retrátil (CG-65, CG-66)
+
+A projeção precisa cair na tela, mas nenhum dos dois objetos conhece o outro nem a própria posição na sala
+(camada `objects/`). Quem alinha é `scene/classroom`, com mudanças de espaço:
+
+```cpp
+// centro da lona: espaço da tela -> mundo -> espaço do projetor
+const glm::vec3 screenCenter = toWorld(screenPlacement, screen_.canvasCenter());
+projector_.aimAt(toWorld(glm::inverse(projectorPlacement), screenCenter));
+```
+
+`Projector::aimAt` gira só a articulação da cabeça em X (inclinação), calculando o ângulo para o **eixo da lente**,
+que fica abaixo do pivô, cruzar o alvo; o giro em Y é do placement. Com as posições atuais (provisórias até a CG-69) a
+inclinação é de ~12,5° e a lente fica a ~2,9 m da lona: throw ratio de ~1,45 para a imagem de 2,0 m. Como o
+alinhamento é calculado, mover a tela ou o projetor não exige ajustar ângulo nenhum. `lensCenter()` e
+`lensDirection()` dão a origem e a direção da projeção para a CG-77. Com o projetor inclinado e a tela vertical, a
+imagem real seria um trapézio (keystone): a CG-77 pode desenhar o slide direto na lona.
 
 ### Mesh, primitivas, SceneNode, Shader e Texture (CG-56 a CG-58)
 

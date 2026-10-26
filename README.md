@@ -78,14 +78,22 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `A` / `D` | Move para a esquerda / direita |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce no eixo Y do mundo |
 | Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
-| `1` / `2` / `3` / `4` / `5` | Inspeção: cena completa / cubo isolado / objeto articulado isolado / ventilador isolado / cadeira isolada |
+| `1` a `9`, `0` | Inspeção: cena completa / carteira / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
+| `[` / `]` | Alvo anterior / próximo, em ciclo pelos dez alvos, incluindo a cadeira após a lixeira |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`5`) funciona mesmo assim. Ao perder o foco,
-o cursor é liberado e é preciso clicar de novo.
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`) funciona mesmo assim.
+As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
+Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona a cadeira. O ciclo retorna do último alvo ao primeiro
+e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
 
 <!-- CG-81 (Sprint 3): interações (tela retrátil, ventilador, projetor) e a inspeção de cada objeto. -->
+
+A carteira (CG-62, `objects::StudentDesk`) tem tampo de MDF de 0,60 × 0,45 m a 0,75 m do chão, estrutura de tubo de
+aço de 22 mm, porta-livros de arame sob o tampo e ponteiras de plástico. Pivô no chão, no centro entre os pés, com a
+frente (+Z) para o lado do aluno. Tubo e espessura do tampo vêm de `objects/furniture_style.hpp`, compartilhado com a
+cadeira. A posição em `Classroom` é provisória; até os materiais por peça (CG-72) ela usa a textura UV de teste.
 
 O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
 A origem local é a fixação na parede, com frente +Z. `Classroom` define seu posicionamento provisório;
@@ -93,13 +101,41 @@ A origem local é a fixação na parede, com frente +Z. `Classroom` define seu p
 ficam para a CG-76. Até os materiais por peça (CG-72), ele usa a mesma textura UV provisória da cena;
 grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
 
-A cadeira escolar (CG-60, tecla `5`) tem assento de 0,40 × 0,40 m com topo a 0,45 m, placas de 0,018 m
-e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares de raio
-0,011 m (16 segmentos), quadro sob o assento, travessas inferiores e dois montantes sustentam as placas;
+A cadeira escolar (CG-60, décimo alvo, acessível por `[` e `]`) tem assento de 0,40 × 0,40 m com topo a 0,45 m,
+placas de 0,018 m e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares
+de raio 0,011 m (16 segmentos), quadro sob o assento, travessas inferiores e dois montantes sustentam as placas;
 sapatas e fixações discretas completam a estrutura. O pivô fica no chão entre as pernas, com frente +Z.
-`objects::Chair::addTo` permite várias instâncias com os mesmos meshes; a posição provisória fica em `Classroom`.
-As medidas comuns à carteira da CG-62 estão no novo `include/objects/furniture_style.hpp`.
+`objects::Chair::addTo` cria raízes independentes com meshes compartilhados; posição e enquadramento provisórios
+da CG-60 foram mantidos em `Classroom`. A cadeira usa `objects::furniture::kTubeRadius`, `kTubeSegments` e
+`kBoardThickness` do header compartilhado `include/objects/furniture_style.hpp` da CG-62, sem duplicar constantes.
 Até a CG-72, permanece a textura UV provisória: metal cinza-escuro e madeira laminada serão materiais por peça.
+
+A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubos T8 de 1,20 m, refletor em "W" e aletas;
+a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,
+origem no centro da face encostada na parede e frente +Z; `objects::LightSwitch::setOn(bool)` só inclina a tecla, sem
+reconstruir geometria. A tecla `L` e o acender da luz ficam para a CG-73. Até os materiais por peça (CG-72), os dois
+usam a textura UV provisória da cena; as posições em `Classroom` também são provisórias.
+
+A mesa do professor (CG-64) tem tampo de 1,20 × 0,60 m a 0,75 m do chão, laterais e painel frontal de MDF e um
+gaveteiro de 3 gavetas fixas com puxadores. O pivô fica no chão, no centro da mesa; a frente (+Z, painel frontal) é o
+lado da turma e as gavetas abrem para o professor (-Z). A posição em `Classroom` é provisória. Até os materiais por peça
+(CG-72), usa a mesma textura UV da cena.
+A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede do quadro, em posição
+provisória até a sala (CG-69). A origem local é o centro da face da caixa encostada na parede, com frente +Z.
+`objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a
+articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Até os materiais por peça (CG-72), ela usa
+a textura UV provisória da cena; a lona receberá `lona_tela.png`.
+
+O projetor (CG-65) fica preso ao teto a cerca de 2,9 m da tela, com corpo de 0,30 × 0,10 × 0,25 m e a lente como peça
+separada (a CG-77 dá brilho a ela). A origem local é o ponto de fixação no teto, com frente (lente) +Z.
+`objects::Projector::aimAt(alvo)` inclina a cabeça para o eixo da lente passar pelo alvo; a `Classroom` usa o centro
+da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P` e a projeção ficam para a CG-77; o
+gabinete receberá `plastico_projetor.png`.
+
+A lixeira (CG-67) é um tronco de cone oco de 0,30 m de diâmetro na boca e 0,40 m de altura, com parede de 6 mm e
+borda com espessura, em posição provisória no canto da parede do quadro até a sala (CG-69). Pivô no centro do fundo.
+O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Até os materiais por
+peça (CG-72), ela usa a textura UV provisória da cena; receberá `plastico_lixeira.png`.
 
 ## Estrutura
 

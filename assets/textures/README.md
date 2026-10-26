@@ -17,3 +17,6 @@ Dicas:
 | Arquivo | Usado em | Origem | Autor | Licença |
 | --- | --- | --- | --- | --- |
 | `uv_teste.png` | Cena de exemplo (teste do carregador) | Gerada por script Python: R = u, G = v, xadrez 8×8 | Equipe | Própria (livre uso no projeto) |
+| `lona_tela.png` | Lona da tela retrátil (CG-66; aplicada na CG-78) | Gerada por script Python: trama de 4 px e ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
+| `plastico_projetor.png` | Gabinete do projetor (CG-65; aplicada na CG-78) | Gerada por script Python: plástico cinza fosco, ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
+| `plastico_lixeira.png` | Lixeira (CG-67; aplicada na CG-78) | Gerada por script Python: polipropileno azul, ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
