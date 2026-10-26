@@ -12,6 +12,9 @@
 #include "objects/fan.hpp"
 #include "objects/lamp.hpp"
 #include "objects/teacher_desk.hpp"
+#include "objects/projection_screen.hpp"
+#include "objects/projector.hpp"
+#include "objects/trash_can.hpp"
 
 class Camera;
 class Input;
@@ -78,6 +81,9 @@ private:
     objects::Lamp lamp_;
     objects::LightSwitch lightSwitch_;
     objects::TeacherDesk teacherDesk_;
+    objects::ProjectionScreen screen_;
+    objects::Projector projector_;
+    objects::TrashCan trashCan_;
 
     SceneNode root_;
     std::vector<InspectionTarget> targets_;

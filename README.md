@@ -78,7 +78,7 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `A` / `D` | Move para a esquerda / direita |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce no eixo Y do mundo |
 | Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
-| `1` / `2` / `3` / `4` / `5` / `6` / `7` | Inspeção: cena completa / cubo / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor (cada um isolado) |
+| `1` a `9`, `0` | Inspeção: cena completa / cubo / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
@@ -103,6 +103,22 @@ A mesa do professor (CG-64) tem tampo de 1,20 × 0,60 m a 0,75 m do chão, later
 gaveteiro de 3 gavetas fixas com puxadores. O pivô fica no chão, no centro da mesa; a frente (+Z, painel frontal) é o
 lado da turma e as gavetas abrem para o professor (-Z). A posição em `Classroom` é provisória. Até os materiais por peça
 (CG-72), usa a mesma textura UV da cena.
+A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede do quadro, em posição
+provisória até a sala (CG-69). A origem local é o centro da face da caixa encostada na parede, com frente +Z.
+`objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a
+articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Até os materiais por peça (CG-72), ela usa
+a textura UV provisória da cena; a lona receberá `lona_tela.png`.
+
+O projetor (CG-65) fica preso ao teto a cerca de 2,9 m da tela, com corpo de 0,30 × 0,10 × 0,25 m e a lente como peça
+separada (a CG-77 dá brilho a ela). A origem local é o ponto de fixação no teto, com frente (lente) +Z.
+`objects::Projector::aimAt(alvo)` inclina a cabeça para o eixo da lente passar pelo alvo; a `Classroom` usa o centro
+da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P` e a projeção ficam para a CG-77; o
+gabinete receberá `plastico_projetor.png`.
+
+A lixeira (CG-67) é um tronco de cone oco de 0,30 m de diâmetro na boca e 0,40 m de altura, com parede de 6 mm e
+borda com espessura, em posição provisória no canto da parede do quadro até a sala (CG-69). Pivô no centro do fundo.
+O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Até os materiais por
+peça (CG-72), ela usa a textura UV provisória da cena; receberá `plastico_lixeira.png`.
 
 ## Estrutura
 
