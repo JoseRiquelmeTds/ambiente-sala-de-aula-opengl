@@ -9,6 +9,7 @@
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 #include "gfx/texture.hpp"
+#include "objects/student_desk.hpp"
 #include "objects/fan.hpp"
 #include "objects/lamp.hpp"
 #include "objects/teacher_desk.hpp"
@@ -31,7 +32,7 @@ namespace scene {
 //  addTo no construtor e registre um alvo de inspeção (docs/ARQUITETURA.md § 4).
 //  Todo alvo é um filho direto da raiz: a inspeção esconde os outros filhos.
 //
-//  Cena de testes: o exemplo da estrutura de mesh (piso, cubo e objeto articulado) e os objetos já
+//  Cena de testes: o exemplo da estrutura de mesh (piso e objeto articulado) e os objetos já
 //  modelados, em posições provisórias até a montagem da sala (CG-69).
 //
 //  Cria meshes e texturas: construir com o contexto OpenGL ativo e destruir antes da janela.
@@ -71,12 +72,12 @@ private:
     // Membros na ordem de construção: meshes e textura antes da árvore, que aponta para eles
     // e é destruída primeiro.
     Mesh floorMesh_;
-    Mesh cubeMesh_;
     Mesh baseMesh_;
     Mesh rodMesh_;
     Mesh armMesh_;
     // Vermelho cresce com u (para a direita) e verde com v (para cima). Verde embaixo = imagem invertida.
     Texture testTexture_;
+    objects::StudentDesk studentDesk_;
     objects::Fan fan_;
     objects::Lamp lamp_;
     objects::LightSwitch lightSwitch_;

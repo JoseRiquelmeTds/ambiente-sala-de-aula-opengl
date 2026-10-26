@@ -6,7 +6,7 @@ vértice) em [CONVENCOES.md](CONVENCOES.md).
 
 > [!NOTE]
 > O `gfx/material` ainda não existe: nasce com a CG-72. Por enquanto `scene/classroom` monta a cena de exemplo da
-> estrutura de mesh (piso, cubo e objeto articulado) e os objetos da Sprint 1 já modelados, em posição provisória até a
+> estrutura de mesh (piso e objeto articulado) e os objetos da Sprint 1 já modelados, em posição provisória até a
 > sala (CG-69).
 
 ## Sumário
@@ -317,8 +317,8 @@ com a proporção atual do framebuffer e suspende o desenho quando a largura ou 
 na câmera. O movimento combinado é normalizado e usa `deltaTime`; o delta do mouse **não** usa
 `deltaTime`. Não há colisões, gravidade ou limite de deslocamento.
 
-A inspeção fica em `scene::Classroom` (CG-87): `1` mostra a sala inteira e `2` a `9` isolam cada alvo registrado, na
-ordem da lista (hoje `2` = cubo, `3` = objeto articulado, `4` = ventilador, `5` = tela retrátil, `6` = projetor e `7` = lixeira). Funciona com a janela em foco, mesmo com o cursor livre, e
+A inspeção fica em `scene::Classroom` (CG-87): `1` mostra a sala inteira e `2` a `9` e `0` isolam cada alvo registrado, na
+ordem da lista (hoje `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor, `7` = mesa do professor, `8` = tela retrátil, `9` = projetor e `0` = lixeira). Funciona com a janela em foco, mesmo com o cursor livre, e
 restaura um enquadramento para cada alvo; tecla sem alvo é ignorada. Depois a câmera continua livre. A perda de foco libera o cursor e exige
 novo clique para retomar a navegação; com o cursor livre não há movimento nem rotação pelo mouse.
 

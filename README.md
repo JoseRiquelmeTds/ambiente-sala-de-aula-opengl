@@ -78,14 +78,19 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `A` / `D` | Move para a esquerda / direita |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce no eixo Y do mundo |
 | Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
-| `1` a `9`, `0` | Inspeção: cena completa / cubo / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
+| `1` a `9`, `0` | Inspeção: cena completa / carteira / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`7`) funciona mesmo assim. Ao perder o foco,
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9` e `0`) funciona mesmo assim. Ao perder o foco,
 o cursor é liberado e é preciso clicar de novo.
 
 <!-- CG-81 (Sprint 3): interações (tela retrátil, ventilador, projetor) e a inspeção de cada objeto. -->
+
+A carteira (CG-62, `objects::StudentDesk`) tem tampo de MDF de 0,60 × 0,45 m a 0,75 m do chão, estrutura de tubo de
+aço de 22 mm, porta-livros de arame sob o tampo e ponteiras de plástico. Pivô no chão, no centro entre os pés, com a
+frente (+Z) para o lado do aluno. Tubo e espessura do tampo vêm de `objects/furniture_style.hpp`, compartilhado com a
+cadeira. A posição em `Classroom` é provisória; até os materiais por peça (CG-72) ela usa a textura UV de teste.
 
 O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
 A origem local é a fixação na parede, com frente +Z. `Classroom` define seu posicionamento provisório;

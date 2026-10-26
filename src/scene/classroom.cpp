@@ -38,18 +38,17 @@ glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
 Classroom::Classroom()
     // Piso de 4 x 4 m com a textura repetindo a cada 1 m (com kDebugMode = 2, a UV vai de 0 a 4).
     : floorMesh_(primitives::plane(4.0f, 4.0f, 1.0f)),
-      cubeMesh_(primitives::box({0.6f, 0.6f, 0.6f})),
       baseMesh_(primitives::cylinder(0.25f, 0.05f)),
       rodMesh_(primitives::cylinder(0.025f, 1.0f, 16)),
       armMesh_(primitives::box({0.5f, 0.04f, 0.04f})),
       testTexture_("assets/textures/uv_teste.png") {
     root_.addChild(&floorMesh_);
 
-    // Peça simples: model = T · R (sem escala, o mesh já foi criado no tamanho real).
-    glm::mat4 cubeTransform = glm::translate(glm::mat4(1.0f), glm::vec3(-0.8f, 0.0f, 0.0f));
-    cubeTransform = glm::rotate(cubeTransform, glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    const SceneNode& cube = root_.addChild(&cubeMesh_, cubeTransform);
-    targets_.push_back({"cubo", &cube, {0.2f, 1.0f, 1.5f}, {-0.8f, 0.3f, 0.0f}});
+    // Carteira (CG-62) em posição provisória, sem rotação: a frente (lado do aluno) fica para +Z.
+    // Ocupa a tecla 2, que era do cubo de teste: as teclas 2–9 e 0 já estavam todas em uso.
+    const glm::mat4 studentDeskPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 1.2f));
+    const SceneNode& studentDesk = studentDesk_.addTo(root_, studentDeskPlacement);
+    targets_.push_back({"carteira", &studentDesk, {1.7f, 1.1f, 2.3f}, {1.0f, 0.5f, 1.2f}});  // tecla 2
 
     // Objeto composto: base -> haste -> articulação (sem mesh) -> braço.
     // Mover a base leva todo o resto junto; girar a articulação só mexe no braço.
@@ -74,7 +73,7 @@ Classroom::Classroom()
     // Enquadramentos no espaço do objeto acompanham também uma futura mudança de orientação.
     const glm::vec3 fanEye = glm::vec3(fanPlacement * glm::vec4(0.48f, 0.40f, 1.10f, 1.0f));
     const glm::vec3 fanCenter = glm::vec3(fanPlacement * glm::vec4(0, 0.13f, 0.23f, 1.0f));
-    targets_.push_back({"ventilador", &fan, fanEye, fanCenter});  // tecla 4; preserva 2 e 3
+    targets_.push_back({"ventilador", &fan, fanEye, fanCenter});  // tecla 4
 
     // Posições provisórias (ainda não há teto nem paredes): só translação, a montagem da sala
     // (CG-69) troca estas matrizes. Lâmpada com o pivô a 2,8 m, como se encostada no teto.
