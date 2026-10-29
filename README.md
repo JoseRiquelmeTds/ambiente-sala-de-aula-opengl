@@ -79,11 +79,14 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce no eixo Y do mundo |
 | Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
 | `1` a `9`, `0` | Inspeção: cena completa / carteira / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
+| `[` / `]` | Alvo anterior / próximo, em ciclo pelos onze alvos: cadeira após a lixeira e quadro ao final |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9` e `0`) funciona mesmo assim. Ao perder o foco,
-o cursor é liberado e é preciso clicar de novo.
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`) funciona mesmo assim.
+As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
+Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona o quadro. O ciclo retorna do último alvo ao primeiro
+e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
 
 <!-- CG-81 (Sprint 3): interações (tela retrátil, ventilador, projetor) e a inspeção de cada objeto. -->
 
@@ -97,6 +100,31 @@ A origem local é a fixação na parede, com frente +Z. `Classroom` define seu p
 `objects::Fan::setRotorAngle(graus)` gira só pás e tampa, sem reconstruir geometria. A tecla `V` e a animação
 ficam para a CG-76. Até os materiais por peça (CG-72), ele usa a mesma textura UV provisória da cena;
 grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
+
+A cadeira escolar (CG-60, décimo alvo, acessível por `[` e `]`) tem assento de 0,40 × 0,40 m com topo a 0,45 m,
+placas de 0,018 m e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares
+de raio 0,011 m (16 segmentos), quadro sob o assento, travessas inferiores e dois montantes sustentam as placas;
+sapatas e fixações discretas completam a estrutura. O pivô fica no chão entre as pernas, com frente +Z.
+`objects::Chair::addTo` cria raízes independentes com meshes compartilhados; posição e enquadramento provisórios
+da CG-60 foram mantidos em `Classroom`. A cadeira usa `objects::furniture::kTubeRadius`, `kTubeSegments` e
+`kBoardThickness` do header compartilhado `include/objects/furniture_style.hpp` da CG-62, sem duplicar constantes.
+Até a CG-72, permanece a textura UV provisória: metal cinza-escuro e madeira laminada serão materiais por peça.
+
+O quadro escolar (CG-61, `objects::Board`) tem moldura externa de 3,00 × 1,20 m, painel estrutural de 16 mm e
+superfície lisa de escrita de 2,95 × 1,15 m, com face frontal em Z local = 0,018 m e UV 0–1 sem espelhamento.
+Moldura nos quatro lados (25 mm de largura), quatro acabamentos de canto e bandeja inferior de 2,60 × 0,10 m
+com bordas completam o conjunto. Na bandeja ficam um apagador de 0,10 × 0,05 × 0,03 m (largura, profundidade,
+altura), com feltro separado, e dois marcadores de 0,13 m com tampas e extremidades separadas.
+O pivô fica no centro da face posterior de fixação, frente +Z; a posição provisória em `Classroom` é
+`(0, 1,50, -3,50)` m, com bordas da moldura a 0,90 e 2,10 m do chão, ajustável pela CG-69 só pelo placement.
+Moldura e cantos chegam a 0,022 e 0,024 m da parede: ficam pelo menos 14 mm atrás da traseira da lona
+(0,038 m), sem mudar a tela ou o alinhamento do projetor. A bandeja avança de 0,012 a 0,112 m da parede;
+com acessórios, fica entre 0,896 e 0,930 m do chão, abaixo da barra e do puxador da tela aberta.
+O quadro é o 11º alvo, depois da cadeira: da cena completa, pressione `[`; da cadeira, `]`; da lixeira (`0`),
+duas vezes `]`. A inspeção isola o conjunto, sem a tela, em perspectiva levemente acima e à direita.
+Cada `addTo` cria uma raiz independente com meshes compartilhados e acessórios descendentes. Até a CG-72,
+usa a textura UV provisória; superfície, corpo, alumínio, bandeja, apagador/feltro e corpos/tampas dos marcadores
+estão separados para os futuros materiais por peça.
 
 A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubos T8 de 1,20 m, refletor em "W" e aletas;
 a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,

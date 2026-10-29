@@ -33,7 +33,7 @@ deltaTime = ...                              main.cpp       segundos, limitado a
 update(...)                                  main.cpp       atalhos globais (Q, Esc, captura do cursor)
   ├─ classroom.update(input, deltaTime)      scene/         teclas das interações -> métodos dos objetos
   │    └─ fan.update(deltaTime) ...          objects/       animação de cada objeto
-  ├─ classroom.handleInspection(input, cam)  scene/         teclas 1-9: isola um alvo e reenquadra a câmera
+  ├─ classroom.handleInspection(input, cam)  scene/         teclas 1-9, 0, [, ]: inspeção e enquadramento
   └─ camera.rotate(...) / camera.move(...)   core/camera    navegação, só com o cursor capturado
 renderer::draw(camera, root, texture)        gfx/renderer   shader, matrizes view/projeção, desenha a árvore
 glfwSwapBuffers(window);
@@ -231,7 +231,7 @@ objects::Fan fan_;
 glm::mat4 fanPlacement = glm::translate(glm::mat4(1.0f), {3.9f, 2.4f, -1.0f});
 fanPlacement = glm::rotate(fanPlacement, glm::radians(-90.0f), {0.0f, 1.0f, 0.0f});
 const SceneNode& fan = fan_.addTo(root_, fanPlacement);
-targets_.push_back({"ventilador", &fan, {2.5f, 2.0f, 0.0f}, {3.9f, 2.4f, -1.0f}});  // tecla = posição na lista + 2
+targets_.push_back({"ventilador", &fan, {2.5f, 2.0f, 0.0f}, {3.9f, 2.4f, -1.0f}});  // alvos após o nono: [ e ]
 
 // src/scene/classroom.cpp, em Classroom::update
 if (input.keyPressed(GLFW_KEY_V)) {
@@ -317,10 +317,15 @@ com a proporção atual do framebuffer e suspende o desenho quando a largura ou 
 na câmera. O movimento combinado é normalizado e usa `deltaTime`; o delta do mouse **não** usa
 `deltaTime`. Não há colisões, gravidade ou limite de deslocamento.
 
-A inspeção fica em `scene::Classroom` (CG-87): `1` mostra a sala inteira e `2` a `9` e `0` isolam cada alvo registrado, na
-ordem da lista (hoje `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor, `7` = mesa do professor, `8` = tela retrátil, `9` = projetor e `0` = lixeira). Funciona com a janela em foco, mesmo com o cursor livre, e
-restaura um enquadramento para cada alvo; tecla sem alvo é ignorada. Depois a câmera continua livre. A perda de foco libera o cursor e exige
-novo clique para retomar a navegação; com o cursor livre não há movimento nem rotação pelo mouse.
+A inspeção fica em `scene::Classroom` (CG-87, CG-60): `1` mostra a sala inteira. Os nove atalhos existentes ficam
+preservados: `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor,
+`7` = mesa do professor, `8` = tela retrátil, `9` = projetor e `0` = lixeira. A cadeira é registrada depois deles,
+como décimo alvo. `[` e `]` percorrem qualquer quantidade de alvos com retorno circular; após uma seleção numérica,
+continuam desse alvo. Da cena inteira, `]` vai ao primeiro e `[` ao último. `currentInspection_` começa em
+`kWholeScene` e só muda quando `selectInspection()` aceita uma seleção, junto com o isolamento e o enquadramento.
+Funciona com a janela em foco, mesmo com o cursor livre; índice sem alvo é ignorado. Depois a câmera continua livre.
+A perda de foco libera o cursor e exige novo clique para retomar a navegação; com o cursor livre não há movimento
+nem rotação pelo mouse.
 
 ### Projetor e tela retrátil (CG-65, CG-66)
 

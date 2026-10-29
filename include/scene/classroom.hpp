@@ -9,6 +9,8 @@
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 #include "gfx/texture.hpp"
+#include "objects/board.hpp"
+#include "objects/chair.hpp"
 #include "objects/student_desk.hpp"
 #include "objects/fan.hpp"
 #include "objects/lamp.hpp"
@@ -47,9 +49,10 @@ public:
     // Teclas das interações e animações. Uma vez por frame, com a janela em foco.
     void update(const Input& input, float deltaTime);
 
-    // Tecla 1 mostra a sala inteira; 2 a 9, cada alvo isolado, na ordem em que foram
-    // registrados (cabem 8 alvos). Reenquadra a câmera, que depois continua livre. Retorna true se reenquadrou
-    // neste frame (o chamador não aplica movimento pendente).
+    // Tecla 1 mostra a sala inteira; 2 a 9 e 0 preservam os nove primeiros alvos.
+    // [ e ] percorrem todos os alvos em ciclo (hoje onze, com o quadro no fim), mesmo com cursor livre.
+    // Reenquadra a câmera, que depois continua livre. Retorna true se reenquadrou neste frame
+    // (o chamador não aplica movimento pendente).
     bool handleInspection(const Input& input, Camera& camera);
 
     // index = kWholeScene ou a posição do alvo na lista. Retorna false (sem mudar nada) se não
@@ -85,9 +88,12 @@ private:
     objects::ProjectionScreen screen_;
     objects::Projector projector_;
     objects::TrashCan trashCan_;
+    objects::Chair chair_;
+    objects::Board board_;
 
     SceneNode root_;
     std::vector<InspectionTarget> targets_;
+    int currentInspection_ = kWholeScene;
 };
 
 }  // namespace scene

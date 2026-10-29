@@ -118,6 +118,22 @@ Classroom::Classroom()
     // Enquadramento de cima e de lado, para ver o interior oco e a espessura da borda.
     targets_.push_back({"lixeira", &trashCan, toWorld(trashCanPlacement, {-0.45f, 0.85f, 0.55f}),
                         toWorld(trashCanPlacement, {0.0f, 0.18f, 0.0f})});  // tecla 0
+
+    // Posição e enquadramento originais da CG-60; a cadeira é o décimo alvo, acessível por [ e ].
+    glm::mat4 chairPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.35f, 0.0f, 1.05f));
+    chairPlacement = glm::rotate(chairPlacement, glm::radians(-20.0f), glm::vec3(0, 1, 0));
+    const SceneNode& chair = chair_.addTo(root_, chairPlacement);
+    const glm::vec3 chairEye = glm::vec3(chairPlacement * glm::vec4(0.72f, 0.80f, 0.98f, 1.0f));
+    const glm::vec3 chairCenter = glm::vec3(chairPlacement * glm::vec4(0.0f, 0.42f, -0.03f, 1.0f));
+    targets_.push_back({"cadeira", &chair, chairEye, chairCenter});
+
+    // Quadro (CG-61): centro da fixação na parede, bordas a 0,90 e 2,10 m do chão.
+    // Corpo/moldura ficam atrás da lona; bandeja e acessórios abaixo da ponta da tela aberta.
+    // Posição provisória até a CG-69: geometria e enquadramento acompanham somente este placement.
+    const glm::mat4 boardPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, kFrontWallZ));
+    const SceneNode& board = board_.addTo(root_, boardPlacement);
+    targets_.push_back({"quadro", &board, toWorld(boardPlacement, {0.85f, 0.65f, 3.10f}),
+                        toWorld(boardPlacement, {0.0f, -0.03f, 0.04f})});  // 11º alvo, após a cadeira: [ e ]
 }
 
 void Classroom::update(const Input& /*input*/, float /*deltaTime*/) {
@@ -135,6 +151,18 @@ bool Classroom::handleInspection(const Input& input, Camera& camera) {
             return selectInspection(digit == 0 ? 8 : digit - 2, camera);
         }
     }
+    // A cena inteira não faz parte do ciclo. Partindo dela, ] vai ao primeiro e [ ao último.
+    const int targetCount = static_cast<int>(targets_.size());
+    if (targetCount > 0) {
+        if (input.keyPressed(GLFW_KEY_LEFT_BRACKET)) {
+            const int previous = currentInspection_ <= 0 ? targetCount - 1 : currentInspection_ - 1;
+            return selectInspection(previous, camera);
+        }
+        if (input.keyPressed(GLFW_KEY_RIGHT_BRACKET)) {
+            const int next = (currentInspection_ + 1) % targetCount;
+            return selectInspection(next, camera);
+        }
+    }
     return false;
 }
 
@@ -144,6 +172,7 @@ bool Classroom::selectInspection(int index, Camera& camera) {
             root_.child(i).visible = true;
         }
         camera.lookAt(kSceneEye, kSceneCenter);
+        currentInspection_ = kWholeScene;
         return true;
     }
     if (index < 0 || index >= static_cast<int>(targets_.size())) {
@@ -155,6 +184,7 @@ bool Classroom::selectInspection(int index, Camera& camera) {
         node.visible = &node == target.node;
     }
     camera.lookAt(target.eye, target.center);
+    currentInspection_ = index;
     return true;
 }
 
