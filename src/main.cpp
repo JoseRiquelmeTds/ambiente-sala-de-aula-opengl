@@ -105,6 +105,7 @@ int main() {
         Input input(window);
         Camera camera;
         scene::Classroom classroom;  // cria meshes e texturas: precisa do contexto, sai antes da janela
+        classroom.selectInspection(scene::Classroom::kWholeScene, camera);  // mesma vista da tecla 1
         constexpr double kMaxDeltaTime = 0.1;  // descarta o excesso de pausas longas
         double previousTime = glfwGetTime();
         bool firstFrame = true;
