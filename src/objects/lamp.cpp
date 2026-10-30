@@ -25,6 +25,12 @@ constexpr float kTubeRadius = 0.013f;
 constexpr float kTubeY = -0.040f;  // centro do tubo, abaixo do refletor
 constexpr float kTubeZ = 0.060f;   // tubos em z = -kTubeZ e +kTubeZ
 
+// Luz pontual (CG-71) 1,5 cm abaixo da abertura da calha, no meio dos dois tubos. Não fica
+// dentro do tubo porque o modelo de iluminação não tem emissão nem sombra: com a luz no centro
+// do tubo, as faces do próprio tubo e do refletor vistas de baixo ficariam de costas para ela
+// (N·L < 0) e escuras. Logo abaixo, tubos e refletor aparecem acesos.
+constexpr float kLightGap = 0.015f;
+
 // Soquete encostado na tampa lateral da calha, segurando a ponta do tubo.
 constexpr glm::vec3 kSocketSize(0.030f, 0.034f, 0.032f);
 constexpr float kSocketBottom = kTubeY - kSocketSize.y / 2.0f;  // centrado na altura do tubo
@@ -183,6 +189,10 @@ Lamp::Lamp()
       reflector_(makeReflector()),
       tube_(makeTube()),
       socket_(primitives::box(kSocketSize, 0.05f)) {}
+
+glm::vec3 Lamp::lightOrigin() {
+    return {0.0f, -(kBodyHeight + kLightGap), 0.0f};
+}
 
 SceneNode& Lamp::addTo(SceneNode& parent, const glm::mat4& placement) const {
     SceneNode& root = parent.addChild(&body_, placement);
