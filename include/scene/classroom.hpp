@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "gfx/light.hpp"
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 #include "objects/board.hpp"
@@ -73,11 +74,15 @@ private:
         glm::vec3 center;  // para onde olha
     };
 
-    // Membros na ordem de construção: meshes antes da árvore, que aponta para eles e é
-    // destruída primeiro.
+    // Membros na ordem de construção: meshes e materiais antes da árvore, que aponta para eles
+    // e é destruída primeiro.
     Mesh baseMesh_;
     Mesh rodMesh_;
     Mesh armMesh_;
+    // Materiais do objeto articulado (CG-72): um preset em cada peça, para comparar lado a lado.
+    Material demoWood_;
+    Material demoMetal_;
+    Material demoPlastic_;
     objects::StudentDesk studentDesk_;
     objects::Fan fan_;
     objects::Lamp lamp_;

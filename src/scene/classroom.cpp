@@ -70,7 +70,10 @@ glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
 Classroom::Classroom()
     : baseMesh_(primitives::cylinder(0.25f, 0.05f)),
       rodMesh_(primitives::cylinder(0.025f, 1.0f, 16)),
-      armMesh_(primitives::box({0.5f, 0.04f, 0.04f})) {
+      armMesh_(primitives::box({0.5f, 0.04f, 0.04f})),
+      demoWood_(materials::wood()),
+      demoMetal_(materials::metal()),
+      demoPlastic_(materials::plastic()) {
     room_.addTo(root_, glm::mat4(1.0f));
 
     lighting_.ambient = kAmbientLight;
@@ -107,6 +110,12 @@ Classroom::Classroom()
     // O braço tem o pivô na base e centrado em x; deslocado 0,25 m para começar no pivô
     // em vez de atravessá-lo, e 0,02 m para baixo para o eixo do braço passar pelo pivô.
     joint.addChild(&armMesh_, glm::translate(glm::mat4(1.0f), glm::vec3(0.25f, -0.02f, 0.0f)));
+
+    // Materiais (CG-72): base de madeira, haste de metal e braço de plástico. O plástico fica na
+    // articulação (sem mesh) e o braço o herda; um filho novo da articulação também seria plástico.
+    base.material = &demoWood_;
+    rod.material = &demoMetal_;
+    joint.material = &demoPlastic_;
     targets_.push_back({"objeto articulado", &base, toWorld(demoPlacement, {1.2f, 1.4f, 2.0f}),
                         toWorld(demoPlacement, {0.1f, 0.6f, 0.0f})});  // tecla 3
 
