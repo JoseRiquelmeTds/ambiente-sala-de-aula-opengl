@@ -149,19 +149,22 @@ escovado e sapatas de plástico preto.
 A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede frontal.
 A origem local é o centro da face da caixa encostada na parede, com frente +Z.
 `objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a
-articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Até receber os próprios materiais, ela usa
-o material padrão (cinza claro fosco); a lona receberá `lona_tela.png`.
+articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Materiais (CG-78): caixa e suportes de
+plástico branco-gelo, lona branca fosca com trama (`lona_tela.png`, repetida a cada 25 cm pelo `uvScale` do material,
+porque a UV da lona fica de 0 a 1 para o slide), barra inferior de alumínio, cordinha cinza-escura e puxador de plástico
+preto.
 
 O projetor (CG-65) fica preso ao teto a cerca de 2,9 m da tela, com corpo de 0,30 × 0,10 × 0,25 m e a lente como peça
 separada (a CG-77 dá brilho a ela). A origem local é o ponto de fixação no teto, com frente (lente) +Z.
 `objects::Projector::aimAt(alvo)` inclina a cabeça para o eixo da lente passar pelo alvo; a `Classroom` usa o centro
-da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P` e a projeção ficam para a CG-77; o
-gabinete receberá `plastico_projetor.png`.
+da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P` e a projeção ficam para a CG-77.
+Materiais (CG-78): placa do teto e haste de metal grafite, suporte e corpo de plástico cinza texturizado
+(`plastico_projetor.png`) e lente de vidro escuro e brilhante, com material próprio que a CG-77 acende.
 
 A lixeira (CG-67) é um tronco de cone oco de 0,30 m de diâmetro na boca e 0,40 m de altura, com parede de 6 mm e
 borda com espessura, no chão ao lado da região do quadro. Pivô no centro do fundo.
-O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Até receber os próprios
-materiais, ela usa o material padrão (cinza claro fosco); receberá `plastico_lixeira.png`.
+O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Material (CG-78):
+polipropileno azul acetinado com textura (`plastico_lixeira.png`, repetida a cada 25 cm), o mesmo na peça inteira.
 
 ## Montagem da sala (CG-69)
 
