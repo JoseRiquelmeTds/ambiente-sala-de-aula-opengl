@@ -300,7 +300,6 @@ void Classroom::update(const Input& input, float deltaTime) {
         projector_.previousSlide();
         lighting_.projector.image = projector_.currentSlide();
     }
-    // Interações (CG-75, CG-76, CG-77) e animações entram aqui.
 }
 
 void Classroom::setLightOn(bool on) {

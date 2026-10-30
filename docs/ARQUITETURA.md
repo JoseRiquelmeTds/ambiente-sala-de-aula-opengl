@@ -413,3 +413,14 @@ material em nenhum ancestral usa `materials::neutral()`, o padrão do renderer. 
 Documentados nos próprios headers em `include/gfx/`, com exemplos de uso: `vertex.hpp` (formato de vértice), `mesh.hpp` (VAO/VBO/EBO),
 `primitives.hpp` (pivô e UV de cada primitiva), `scene_node.hpp` (hierarquia, pivô, ventilador e tela retrátil),
 `shader.hpp` e `texture.hpp` (wrap, filtro e unidades).
+
+### Trechos para o relatório (AB2)
+
+As transformações pedidas na AB2 ficam marcadas no código com `AB2 ·`, para o relatório (CG-80) citar o trecho certo
+mesmo depois de as linhas mudarem: `git grep -n "AB2 ·"` lista todos.
+
+| Transformação | Task | Onde | Matriz |
+| --- | --- | --- | --- |
+| Escala em Y com pivô no topo (tela retrátil) | CG-75 | `src/objects/projection_screen.cpp`, `ProjectionScreen::applyOpenAmount` | `T(fenda) · S(1, s, 1)` |
+| Rotação das hélices em volta do centro do rotor | CG-76 | `src/objects/fan.cpp`, `Fan::setRotorAngle` (matriz) e `Fan::update` (ω e θ por `deltaTime`) | `T(centro) · Rz(θ)` |
+| Projeção do slide (textura projetiva) | CG-77 | `src/scene/classroom.cpp` (construtor: `V_proj`, `P_proj`) e `shaders/basic.frag`, `projectorLight` | `P_proj · V_proj` |
