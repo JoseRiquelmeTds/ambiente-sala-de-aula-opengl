@@ -21,3 +21,4 @@ Dicas:
 | `plastico_projetor.png` | Gabinete do projetor (CG-65; aplicada na CG-78) | Gerada por script Python: plástico cinza fosco, ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
 | `plastico_lixeira.png` | Lixeira (CG-67; aplicada na CG-78) | Gerada por script Python: polipropileno azul, ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
 | `laminado_carteira.png` | Tampo da carteira (CG-74) e, pelo `objects/furniture_style.hpp`, placas da cadeira | Gerada por script Python: laminado madeirado claro, veio na horizontal (u) com ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
+| `madeira_mesa_professor.png` | Mesa do professor: tampo, painéis e gavetas (CG-74) | Gerada por script Python: madeira escura com veio marcado na horizontal (u), ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
