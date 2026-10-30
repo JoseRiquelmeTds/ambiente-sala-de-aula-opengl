@@ -56,6 +56,13 @@ constexpr float kLampQuadratic = 0.07f;
 // Baixa o bastante para as faces voltadas às lâmpadas continuarem mais claras que as outras.
 constexpr glm::vec3 kAmbientLight(0.25f, 0.25f, 0.26f);
 
+// Ambiente com as lâmpadas apagadas (CG-73). A luz ambiente aproxima a luz rebatida nas paredes, e
+// parte dela vem das próprias lâmpadas: com elas apagadas, sobra só a claridade do dia rebatida. Por
+// isso cai para cerca de 80% e puxa para o azul do dia. Não vai a zero: junto com o preenchimento,
+// nenhuma face fica preta (a sala de dia, com a luz apagada, continua visível). Quem escurece de
+// verdade a sala são as 4 luzes pontuais que saem da conta.
+constexpr glm::vec3 kAmbientLightOff(0.20f, 0.21f, 0.23f);
+
 // Luz de preenchimento: direcional, representa a claridade do dia (a sala não tem janela modelada).
 // Vem da esquerda (-X) de quem olha para o quadro, lado onde as salas costumam ter janelas, viaja
 // para +X e desce. Fraca e levemente azulada: só dá volume às faces que as lâmpadas iluminam de lado.
@@ -219,10 +226,35 @@ Classroom::Classroom()
     const SceneNode& board = board_.addTo(root_, boardPlacement);
     targets_.push_back({"quadro", &board, toWorld(boardPlacement, {0.85f, 0.65f, 3.10f}),
                         toWorld(boardPlacement, {0.0f, -0.03f, 0.04f})});  // 11º alvo, após a cadeira: [ e ]
+
+    // Estado inicial: sala acesa, com a tecla do interruptor já na posição "ligado" e os tubos brilhando.
+    // Depois das luminárias e do interruptor, que esta chamada altera.
+    setLightOn(true);
 }
 
-void Classroom::update(const Input& /*input*/, float /*deltaTime*/) {
-    // Interações (CG-73, CG-75, CG-76, CG-77) e animações entram aqui.
+void Classroom::update(const Input& input, float /*deltaTime*/) {
+    // keyPressed vale só no frame em que a tecla desce (borda): segurar L não fica piscando a luz.
+    if (input.keyPressed(GLFW_KEY_L)) {
+        setLightOn(!lightOn_);
+    }
+    // Interações (CG-75, CG-76, CG-77) e animações entram aqui.
+}
+
+void Classroom::setLightOn(bool on) {
+    lightOn_ = on;
+
+    // Única transformação da interação: a tecla bascula (rotação da articulação em torno do eixo X).
+    lightSwitch_.setOn(on);
+
+    // Luz desligada não é enviada ao shader (o renderer só manda as com enabled = true), então
+    // uPointLightCount vai de 4 a 0 e o laço das luzes pontuais do fragment shader não roda.
+    for (PointLight& light : lighting_.pointLights) {
+        light.enabled = on;
+    }
+
+    // O tubo aceso brilha sozinho (emissive); apagado, volta a ser vidro iluminado pela sala.
+    lamp_.setLit(on);
+    lighting_.ambient = on ? kAmbientLight : kAmbientLightOff;
 }
 
 bool Classroom::handleInspection(const Input& input, Camera& camera) {

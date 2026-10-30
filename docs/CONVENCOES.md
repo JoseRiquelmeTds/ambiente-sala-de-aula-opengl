@@ -158,7 +158,7 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `V` | Ventilador: liga / desliga | `scene/classroom` | CG-76 | reservada |
 | `P` | Projetor: liga / desliga | `scene/classroom` | CG-77 | reservada |
 | `←` / `→` | Slide anterior / próximo | `scene/classroom` | CG-77 (opcional) | reservada |
-| `L` | Luz: liga / desliga | `scene/classroom` | CG-73 | reservada |
+| `L` | Luz: liga / desliga (a sala começa acesa) | `scene/classroom` | CG-73 | em uso |
 
 As seleções funcionam com o cursor livre e reenquadram a câmera. Após uma tecla numérica, `[` e `]` continuam
 do alvo selecionado. Da sala inteira, `]` seleciona o primeiro alvo (carteira) e `[` o último (quadro, 11º alvo);
