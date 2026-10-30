@@ -81,11 +81,12 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `1` a `9`, `0` | Inspeção: cena completa / carteira / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
 | `[` / `]` | Alvo anterior / próximo, em ciclo pelos onze alvos: cadeira após a lixeira e quadro ao final |
 | `L` | Liga / desliga as luzes do teto, como o interruptor da parede (a sala começa acesa) |
+| `T` | Abre / recolhe a tela retrátil, com animação suave; apertar no meio do curso inverte o sentido |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`) e a luz (`L`)
-funcionam mesmo assim.
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`), a luz (`L`) e a
+tela (`T`) funcionam mesmo assim.
 As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
 Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona o quadro. O ciclo retorna do último alvo ao primeiro
 e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
@@ -149,10 +150,11 @@ escovado e sapatas de plástico preto.
 A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede frontal.
 A origem local é o centro da face da caixa encostada na parede, com frente +Z.
 `objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a
-articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Materiais (CG-78): caixa e suportes de
-plástico branco-gelo, lona branca fosca com trama (`lona_tela.png`, repetida a cada 25 cm pelo `uvScale` do material,
-porque a UV da lona fica de 0 a 1 para o slide), barra inferior de alumínio, cordinha cinza-escura e puxador de plástico
-preto.
+articulação no topo da lona, então ela desce sem descolar da caixa. A tela começa recolhida, deixando o quadro à vista;
+a tecla `T` (CG-75) abre ou recolhe em ~2,5 s, com aceleração e frenagem suaves, e para nos limites (só a barra na
+fenda / lona inteira de 1,5 m). Materiais (CG-78): caixa e suportes de plástico branco-gelo, lona branca fosca com trama
+(`lona_tela.png`, repetida a cada 25 cm pelo `uvScale` do material, porque a UV da lona fica de 0 a 1 para o slide),
+barra inferior de alumínio, cordinha cinza-escura e puxador de plástico preto.
 
 O projetor (CG-65) fica preso ao teto a cerca de 2,9 m da tela, com corpo de 0,30 × 0,10 × 0,25 m e a lente como peça
 separada (a CG-77 dá brilho a ela). A origem local é o ponto de fixação no teto, com frente (lente) +Z.
