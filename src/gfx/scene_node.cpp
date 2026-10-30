@@ -17,6 +17,13 @@ void SceneNode::draw(const Shader& shader, const glm::mat4& parentModel) const {
 
     if (mesh != nullptr) {
         shader.setMat4("uModel", model);
+        // Normal matrix: a inversa transposta da parte 3x3 da model (sem translação). Com escala
+        // não uniforme (a lona da tela em Y), multiplicar a normal pela própria model a entorta e
+        // ela deixa de ser perpendicular à superfície; a inversa transposta desfaz isso.
+        // Calculada aqui, uma vez por peça, e não no vertex shader, uma vez por vértice.
+        // Escala 0 deixaria a matriz singular (sem inversa): por isso a peça totalmente
+        // recolhida usa visible = false e nem chega aqui.
+        shader.setMat3("uNormalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
         mesh->draw();
     }
 
