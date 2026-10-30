@@ -86,7 +86,7 @@ include/                         src/
 │   ├── material.hpp             │   ├── material.cpp       cor, textura, especular e brilho por peça (CG-72)
 │   └── renderer.hpp             │   └── renderer.cpp       estado do GL e desenho do frame
 ├── objects/                     ├── objects/               (a criar na Sprint 1)
-│   ├── furniture_style.hpp      │   │                      medidas e materiais comuns de carteira e cadeira
+│   ├── furniture_style.hpp      │   ├── furniture_style.cpp medidas e materiais comuns de carteira e cadeira
 │   ├── fan.hpp ...              │   ├── fan.cpp ...        um módulo por objeto (tabela abaixo)
 │   └── room.hpp                 │   └── room.cpp           paredes, piso e teto
 └── scene/                       ├── scene/

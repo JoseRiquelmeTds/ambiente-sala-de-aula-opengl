@@ -98,7 +98,10 @@ constexpr float kBoardThickness = 0.018f;  // MDF do tampo, assento e encosto
 }  // namespace objects::furniture
 ```
 
-Quando o sistema de materiais (CG-72) existir, os materiais `metal` e `madeira` de mobília entram no mesmo header.
+Os materiais comuns também estão nesse header (CG-74): `furniture::tubeMaterial()` (aço pintado grafite),
+`furniture::boardMaterial()` (laminado), o caminho da textura do laminado (`kBoardTexturePath`) e o tiling das placas
+(`kBoardTextureSize`). Cada móvel guarda o próprio `Material` e a própria `Texture` como membros; o comentário do header
+mostra como aplicar na cadeira.
 
 ## 7. Medidas de referência
 

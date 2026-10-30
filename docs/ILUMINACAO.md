@@ -207,9 +207,38 @@ Todos aceitam a cor como parâmetro (`materials::plastic(glm::vec3(0.1f, 0.3f, 0
 `neutral()`.
 
 O objeto articulado de demonstração (tecla `3`) usa três presets lado a lado: base de madeira, haste de metal e
-braço de plástico; as paredes e os móveis ainda sem material mostram o comportamento fosco do `neutral()`. A
+braço de plástico; as paredes e os objetos ainda sem material mostram o comportamento fosco do `neutral()`. A
 diferença aparece sobretudo no reflexo: a haste de metal fica escura, com uma faixa clara quando vista no ângulo do
 reflexo da lâmpada; o braço de plástico ganha um brilho claro no topo; a base de madeira não brilha.
+
+### Materiais aplicados (CG-74: carteira, luminária, interruptor e mesa do professor)
+
+Cada peça parte de um preset e ajusta o que a superfície real pede. Só as madeiras têm textura: tubo pintado, chapa
+pintada, alumínio, vidro e plástico são lisos na vida real, e a cor + o reflexo bastam. Com textura, `diffuse` é
+branco (a cor vem da imagem). O tiling vem do `textureSize` das primitivas (UV em metros), então `uvScale` fica 1.
+
+| Peça | Preset | `diffuse` | `specular` | `shininess` | Textura (metros por repetição) |
+| --- | --- | --- | --- | --- | --- |
+| Carteira: tubos e porta-livros | `furniture::tubeMaterial()` (metal) | (0,20; 0,20; 0,22) grafite | 0,55 | 48 | — |
+| Carteira: tampo | `furniture::boardMaterial()` (wood) | 1 | 0,12 | 24 | `laminado_carteira.png` (0,5 m) |
+| Carteira: ponteiras | plastic | 0,05 | 0,20 | 16 | — |
+| Mesa: tampo, painéis, gavetas | wood | 1 | 0,10 | 20 | `madeira_mesa_professor.png` (0,6 m) |
+| Mesa: puxadores | metal | (0,45; 0,45; 0,47) | 0,80 | 96 | — |
+| Mesa: sapatas | plastic | 0,05 | 0,20 | 16 | — |
+| Luminária: calha (chapa pintada) | plastic | (0,86; 0,86; 0,84) | 0,30 | 24 | — |
+| Luminária: refletor e aletas | metal | (0,55; 0,55; 0,57) alumínio | 0,85 | 64 | — |
+| Luminária: vidro do tubo | plastic | (0,90; 0,92; 0,95) | 0,50 | 64 | — |
+| Luminária: soquetes | plastic | (0,82; 0,82; 0,80) | 0,25 | 16 | — |
+| Interruptor: espelho e tecla | plastic | (0,88; 0,88; 0,86) | 0,50 | 48 | — |
+
+- **Tinta e plástico usam o preset de plástico**, mesmo sobre chapa de aço: o que reflete é a camada de tinta, um
+  não metal (reflexo branco, cor na difusa). O tubo da carteira é a exceção pedida pelo estilo comum (metal), com o
+  reflexo mais fraco e largo que o do aço nu por causa da pintura.
+- **Veio na direção do comprimento:** as imagens têm o veio na horizontal (eixo u), e no `box()` u segue X nas faces
+  de cima e da frente, que é o comprimento do tampo, do painel frontal e das gavetas.
+- **Nada estourando:** os brancos (calha, soquete, vidro, interruptor) ficam entre 0,82 e 0,90, não 1,0: somando
+  ambiente, janela e luminárias, um branco puro passaria de 1 nas faces de frente para a luz, e o OpenGL cortaria em
+  branco chapado, sem volume.
 
 ### Herança pela árvore
 
@@ -271,5 +300,8 @@ SceneNode& TrashCan::addTo(SceneNode& parent, const glm::mat4& placement) const 
 - **`addTo` é `const`:** sem problema, `root.material = &plastic_` guarda um `const Material*`.
 - **Mesma instância em vários lugares:** todas as cópias (6 carteiras) apontam para o mesmo material; mudar o membro
   muda todas.
+- **Material compartilhado entre objetos** (carteira e cadeira, que precisam parecer do mesmo conjunto): a função
+  que monta o material fica num header comum (`furniture::tubeMaterial()` e `furniture::boardMaterial()` em
+  `objects/furniture_style.hpp`) e cada objeto guarda a sua cópia. Mudar a função muda os dois.
 - **Conferir:** `kDebugMode = 3` em `src/gfx/renderer.cpp` mostra a cor do material sem luz; volte para 0.
 - Textura nova vai para `assets/textures/` com a linha na tabela de licenças, no mesmo commit.
