@@ -50,7 +50,7 @@ public:
     SceneNode& addChild(const Mesh* mesh, const glm::mat4& transform = glm::mat4(1.0f));
 
     // Desenha esta peça e todos os descendentes. Chamar com o shader já em uso (shader.use()).
-    // Define o uniform "uModel" de cada peça antes de desenhá-la.
+    // Define os uniforms "uModel" e "uNormalMatrix" de cada peça antes de desenhá-la.
     void draw(const Shader& shader, const glm::mat4& parentModel = glm::mat4(1.0f)) const;
 
     // Filhos diretos, na ordem em que foram criados (ex.: a inspeção esconde todos menos um).

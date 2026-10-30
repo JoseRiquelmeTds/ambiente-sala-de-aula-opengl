@@ -23,6 +23,10 @@ public:
     // Pode ser chamada várias vezes (uma por luminária da sala): todas usam os mesmos meshes.
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement) const;
 
+    // Ponto de onde sai a luz pontual (CG-71), no espaço da luminária: centro da abertura, logo
+    // abaixo dos tubos. Quem posiciona (scene/classroom) leva o ponto para o mundo.
+    static glm::vec3 lightOrigin();
+
 private:
     // Um mesh por material da CG-72. O tubo fica separado porque é a parte que acende (CG-71/73).
     Mesh body_;       // calha em chapa de aço pintada

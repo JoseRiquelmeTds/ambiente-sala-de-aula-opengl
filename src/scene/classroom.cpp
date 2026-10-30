@@ -36,6 +36,32 @@ constexpr float kChairOffsetZ = 0.55f;
 constexpr float kLampColumns[] = {-1.6f, 1.6f};
 constexpr float kLampRows[] = {-1.5f, 1.5f};
 
+// --- Iluminação (CG-71), técnica em docs/ILUMINACAO.md ---------------------
+// Tubo fluorescente branco neutro (puxando de leve para o quente), com pouco mais de metade da
+// força máxima: o centro da sala recebe as quatro luminárias somadas e, com 1,0, o piso e as
+// paredes estouravam para branco.
+constexpr glm::vec3 kLampLightColor(0.55f, 0.53f, 0.50f);
+
+// Atenuação 1 / (1 + 0,14·d + 0,07·d²), d em metros. Na sala de 3 m de pé-direito, o tampo de uma
+// carteira fica a ~2,2 m da luminária mais próxima (fator ~0,60) e o piso logo abaixo a ~2,9 m
+// (~0,50); o canto mais distante, a ~8 m, recebe ~0,15. Assim o centro da sala fica claro e os
+// cantos escurecem aos poucos, sem a queda brusca de uma atenuação só quadrática. Os termos se
+// igualam em d = 2 m: antes pesa o linear (queda suave), depois o quadrático (a luz morre antes
+// de atravessar a sala inteira).
+constexpr float kLampConstant = 1.0f;
+constexpr float kLampLinear = 0.14f;
+constexpr float kLampQuadratic = 0.07f;
+
+// Luz ambiente: piso de claridade para nenhuma face ficar preta (luz rebatida nas paredes).
+// Baixa o bastante para as faces voltadas às lâmpadas continuarem mais claras que as outras.
+constexpr glm::vec3 kAmbientLight(0.25f, 0.25f, 0.26f);
+
+// Luz de preenchimento: direcional, representa a claridade do dia (a sala não tem janela modelada).
+// Vem da esquerda (-X) de quem olha para o quadro, lado onde as salas costumam ter janelas, viaja
+// para +X e desce. Fraca e levemente azulada: só dá volume às faces que as lâmpadas iluminam de lado.
+constexpr glm::vec3 kFillDirection(1.0f, -0.6f, 0.15f);
+constexpr glm::vec3 kFillColor(0.16f, 0.17f, 0.19f);
+
 // Ponto no espaço do objeto levado para o mundo: o enquadramento acompanha o placement.
 glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
     return glm::vec3(placement * glm::vec4(local, 1.0f));
@@ -49,6 +75,10 @@ Classroom::Classroom()
       armMesh_(primitives::box({0.5f, 0.04f, 0.04f})),
       testTexture_("assets/textures/uv_teste.png") {
     room_.addTo(root_, glm::mat4(1.0f));
+
+    lighting_.ambient = kAmbientLight;
+    lighting_.fill.direction = kFillDirection;
+    lighting_.fill.color = kFillColor;
 
     // Duas colunas, três fileiras: corredor central de 1,90 m e passo de 1,50 m entre fileiras.
     // No modelo real, +Z é o lado do ALUNO (porta-livros aberto), não a direção do olhar.
@@ -102,6 +132,14 @@ Classroom::Classroom()
             const float x = kLampColumns[j];
             const glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, kCeilingHeight, z));
             const SceneNode& lamp = lamp_.addTo(root_, placement);
+            // Uma luz pontual por luminária, no ponto da luminária levado para o mundo.
+            PointLight light;
+            light.position = toWorld(placement, objects::Lamp::lightOrigin());
+            light.color = kLampLightColor;
+            light.constant = kLampConstant;
+            light.linear = kLampLinear;
+            light.quadratic = kLampQuadratic;
+            lighting_.pointLights.push_back(light);
             if (i == 0 && j == 0) {
                 targets_.push_back({"lâmpada", &lamp, toWorld(placement, {0.5f, -0.8f, 1.1f}),
                                     toWorld(placement, {0.0f, -0.04f, 0.0f})});  // tecla 5, de baixo

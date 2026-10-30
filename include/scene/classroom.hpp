@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "gfx/light.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 #include "gfx/texture.hpp"
@@ -62,6 +63,8 @@ public:
     static constexpr int kWholeScene = -1;
 
     const SceneNode& root() const { return root_; }
+    // Luzes da sala (CG-71): uma pontual por luminária, o preenchimento e a luz ambiente.
+    const Lighting& lighting() const { return lighting_; }
     // Textura da cena inteira, até existir material por peça (CG-72).
     const Texture& texture() const { return testTexture_; }
 
@@ -93,6 +96,7 @@ private:
     objects::Room room_;
 
     SceneNode root_;
+    Lighting lighting_;
     std::vector<InspectionTarget> targets_;
     int currentInspection_ = kWholeScene;
 };
