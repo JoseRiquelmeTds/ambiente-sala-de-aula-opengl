@@ -1,7 +1,9 @@
 # Iluminação
 
-Como a sala é iluminada (CG-71): o modelo de luz, as luzes da cena e a matriz das normais. Escrito para virar a
-seção de iluminação do relatório técnico (CG-80). Onde cada coisa fica no código: [§ 6](#6-onde-está-no-código).
+Como a sala é iluminada (CG-71): o modelo de luz, as luzes da cena e a matriz das normais; e como cada peça responde
+à luz (materiais, CG-72). Escrito para virar a seção de iluminação e materiais do relatório técnico (CG-80). Onde
+cada coisa fica no código: [§ 6](#6-onde-está-no-código). Para aplicar material num objeto:
+[§ 8](#8-como-aplicar-material-no-seu-objeto).
 
 ## Sumário
 
@@ -11,12 +13,14 @@ seção de iluminação do relatório técnico (CG-80). Onde cada coisa fica no 
 4. [Matriz das normais](#4-matriz-das-normais)
 5. [Valores escolhidos](#5-valores-escolhidos)
 6. [Onde está no código](#6-onde-está-no-código)
+7. [Materiais](#7-materiais)
+8. [Como aplicar material no seu objeto](#8-como-aplicar-material-no-seu-objeto)
 
 ---
 
 ## 1. Modelo de Blinn-Phong
 
-A cor de cada fragmento (pixel candidato) é calculada no fragment shader, por pixel e não por vértice, somando três
+A cor de cada fragmento (pixel candidato) é calculada no fragment shader, por pixel e não por vértice, somando as
 componentes. Todos os vetores são unitários, então o produto escalar `·` é o cosseno do ângulo entre eles:
 
 | Vetor | O que é |
@@ -27,12 +31,12 @@ componentes. Todos os vetores são unitários, então o produto escalar `·` é 
 | **H** | *half-vector*: `normalize(L + V)`, o meio do caminho entre a luz e o olho |
 
 ```
-cor = ambiente · albedo
+cor = emissiva + ambiente · albedo
     + Σ luzes  atenuação · corDaLuz · ( max(N·L, 0) · albedo  +  max(N·H, 0)^brilho · especular )
 ```
 
-`albedo` é a cor difusa da superfície (hoje, a textura), `especular` é a cor do reflexo e `brilho` (*shininess*) o
-expoente que controla o tamanho do reflexo.
+`albedo` é a cor difusa da superfície, `especular` é a cor do reflexo, `brilho` (*shininess*) o expoente que controla
+o tamanho do reflexo e `emissiva` a luz própria da peça. Os quatro vêm do material da peça ([§ 7](#7-materiais)).
 
 - **Ambiente:** uma constante. Representa a luz que rebate nas paredes e chega de todo lado, que o modelo local não
   calcula. Sem ela, toda face de costas para as luzes ficaria preta.
@@ -43,6 +47,8 @@ expoente que controla o tamanho do reflexo.
   refletida vai direto para o olho. O expoente estreita o reflexo: 8 dá uma mancha larga (plástico fosco), 128 um
   ponto pequeno e forte (metal polido). Se `N·L ≤ 0`, o especular é zerado, para o reflexo não aparecer no lado da
   face que não recebe luz.
+- **Emissiva:** luz que a própria peça emite, somada sem depender de luz nenhuma. Zero em quase tudo; é o que fará o
+  tubo da lâmpada acesa parecer aceso (CG-73).
 
 **Por que Blinn-Phong e não Phong.** O Phong original usa `(R·V)^brilho`, com `R = reflect(-L, N)`, o raio de luz
 espelhado na superfície. Blinn troca R·V por N·H:
@@ -144,7 +150,7 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Atenuação | kc = 1; kl = 0,14; kq = 0,07 | `kLampConstant`, `kLampLinear`, `kLampQuadratic` |
 | Ambiente | (0,25; 0,25; 0,26) | `kAmbientLight` |
 | Janela | direção (1; -0,6; 0,15), cor (0,16; 0,17; 0,19) | `kWindowDirection`, `kWindowColor` |
-| Especular / brilho | 0,3 branco / 32, iguais para todas as peças (provisório até a CG-72) | `basic.frag` |
+| Especular / brilho | por peça, no material ([§ 7](#7-materiais)) | `gfx/material.cpp` |
 
 ## 6. Onde está no código
 
@@ -156,7 +162,114 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Envio dos uniforms (`uViewPos`, `uAmbient`, `uWindowLight`, `uPointLights[]`, `uPointLightCount`) | `src/gfx/renderer.cpp` |
 | Normal matrix (`uNormalMatrix`) | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
 | Normal para o mundo | `shaders/basic.vert` |
-| Blinn-Phong, atenuação, modos de depuração | `shaders/basic.frag` (`blinnPhong`, `shade`) |
+| Blinn-Phong, atenuação, modos de depuração | `shaders/basic.frag` (`blinnPhong`, `shade`, `albedo`) |
+| Struct `Material`, presets e envio (`uMaterial.*`) | `include/gfx/material.hpp`, `src/gfx/material.cpp` |
+| Herança do material pela árvore | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
+| Material padrão (`materials::neutral()`) | `src/gfx/renderer.cpp` (`kDefaultMaterial`) |
+| Demonstração dos presets (objeto articulado, tecla `3`) | `src/scene/classroom.cpp` |
 
 Modos do fragment shader (`kDebugMode` em `src/gfx/renderer.cpp`): **0 = iluminado** (padrão), 1 = normal como cor,
-2 = UV como cor, 3 = textura sem luz. Os modos 1 a 3 servem para conferir normais e UVs de um objeto novo.
+2 = UV como cor, 3 = cor difusa do material sem luz. Os modos 1 a 3 servem para conferir normais, UVs e texturas de um
+objeto novo.
+
+## 7. Materiais
+
+O material diz **como uma superfície responde à luz**. As luzes são as mesmas para a sala inteira; o que faz o metal
+parecer metal e a madeira parecer madeira é o material de cada peça. A struct `Material` (`include/gfx/material.hpp`)
+vai para o shader como `uniform Material uMaterial`, enviada por `Material::apply` antes de cada peça ser desenhada.
+
+| Campo | Termo da equação | O que faz |
+| --- | --- | --- |
+| `diffuse` | albedo (ambiente e difusa) | Cor da superfície: a fração de cada canal RGB que ela espalha |
+| `diffuseMap` | albedo | Textura opcional (ponteiro não dono). Com textura, `albedo = diffuse × textura(uv · uvScale)`: `diffuse` branco deixa a textura pura, outra cor a tinge |
+| `uvScale` | — | Repetições da textura (tiling). Peça esticada: aumente na direção que cresceu para a textura não esticar |
+| `specular` | especular | Cor e força do reflexo. Branco/cinza em não metais (o reflexo tem a cor da luz); alto em metal; ~0 em fosco |
+| `shininess` | expoente de `N·H` | Tamanho do reflexo: 4–16 largo e fraco (superfície áspera), 64–128 pequeno e nítido (polida). Mínimo 1 |
+| `emissive` | emissiva | Luz própria, somada sem depender das luzes nem da normal (o tubo da lâmpada acesa, CG-73) |
+
+A textura é ligada na unidade **0** (`kDiffuseTextureUnit`) e o sampler `uMaterial.diffuseMap` lê dela. Sem textura,
+`uMaterial.hasDiffuseMap` é falso e o shader nem amostra: a unidade ainda guardaria a textura da peça anterior.
+
+### Presets
+
+Funções em `namespace materials` (`include/gfx/material.hpp`), sem textura obrigatória. Retornam por valor: guarde
+num membro e ajuste cor, textura ou `uvScale`.
+
+| Preset | `diffuse` (padrão) | `specular` | `shininess` | Por quê |
+| --- | --- | --- | --- | --- |
+| `metal()` | (0,30; 0,30; 0,32) | (0,80; 0,80; 0,82) | 96 | Metal devolve quase toda a luz como reflexo: difusa escura, reflexo forte e concentrado |
+| `wood()` | (0,55; 0,37; 0,22) | 0,06 | 12 | Madeira/MDF é áspera: quase só difusa, reflexo mínimo e espalhado |
+| `plastic()` | (0,70; 0,12; 0,10) | 0,45 | 32 | Plástico liso: a cor fica na difusa e o reflexo é branco, de tamanho médio |
+| `matte()` | (0,80; 0,80; 0,78) | 0,01 | 4 | Quadro, parede, lona: espalha a luz por igual, sem reflexo perceptível |
+| `neutral()` | 0,72 | 0,04 | 8 | Material padrão das peças sem material: cinza claro fosco |
+
+Todos aceitam a cor como parâmetro (`materials::plastic(glm::vec3(0.1f, 0.3f, 0.7f))` para plástico azul), exceto
+`neutral()`.
+
+O objeto articulado de demonstração (tecla `3`) usa três presets lado a lado: base de madeira, haste de metal e
+braço de plástico; as paredes e os móveis ainda sem material mostram o comportamento fosco do `neutral()`. A
+diferença aparece sobretudo no reflexo: a haste de metal fica escura, com uma faixa clara quando vista no ângulo do
+reflexo da lâmpada; o braço de plástico ganha um brilho claro no topo; a base de madeira não brilha.
+
+### Herança pela árvore
+
+`SceneNode` tem `const Material* material = nullptr` (ponteiro **não dono**, como o `mesh`). No `SceneNode::draw`:
+
+```cpp
+const Material& currentMaterial = material != nullptr ? *material : inheritedMaterial;
+// desenha a peça com currentMaterial e o passa como "herdado" para os filhos
+```
+
+Uma peça sem material usa o do pai, que pode ter herdado do avô. Basta definir o material na **raiz** do objeto e
+sobrescrever só nas peças diferentes. Um nó sem mesh (articulação) também pode ter material, que vale para os filhos:
+no demo, o plástico está na articulação e o braço o herda. A raiz da cena recebe o **material padrão** do renderer
+(`materials::neutral()`): objeto que ainda não tem material aparece cinza claro fosco e iluminado, nunca preto nem com
+o material da peça desenhada antes.
+
+## 8. Como aplicar material no seu objeto
+
+1. **Material e textura são membros do objeto**, vivos enquanto a árvore existir (a peça só guarda o ponteiro, como
+   faz com o `Mesh`). A textura vem **antes** do material na declaração da classe, porque o material aponta para ela.
+2. **Comece de um preset** e ajuste cor, textura e `uvScale`.
+3. **Aponte a raiz** para o material principal e sobrescreva só as peças diferentes.
+
+```cpp
+// include/objects/trash_can.hpp (exemplo)
+#include "gfx/material.hpp"
+#include "gfx/texture.hpp"
+
+class TrashCan {
+    // ...
+private:
+    Mesh body_;
+    Texture plasticTexture_;  // antes do material que aponta para ela
+    Material plastic_;
+};
+```
+
+```cpp
+// src/objects/trash_can.cpp
+TrashCan::TrashCan()
+    : body_(makeBody()),
+      plasticTexture_("assets/textures/plastico_lixeira.png"),
+      plastic_(materials::plastic(glm::vec3(1.0f))) {  // branco: a cor vem da textura
+    plastic_.diffuseMap = &plasticTexture_;
+}
+
+SceneNode& TrashCan::addTo(SceneNode& parent, const glm::mat4& placement) const {
+    SceneNode& root = parent.addChild(&body_, placement);
+    root.material = &plastic_;  // a lixeira inteira e tudo o que for pendurado nela
+    return root;
+}
+```
+
+- **Peça diferente dentro do objeto:** `perna.material = &metal_;` muda só a perna e os filhos dela.
+- **Sem textura:** não defina `diffuseMap`; a cor é `diffuse`. Ex.: `metal_(materials::metal())`.
+- **Textura esticando numa peça comprida:** as primitivas já geram UV em metros com `textureSize`, então em geral
+  basta escolher o `textureSize`. Se a UV do mesh vai de 0 a 1 numa peça de 2 × 0,5 m, use `uvScale = {4, 1}`: a
+  textura repete 4 vezes no comprimento e mantém a proporção.
+- **`addTo` é `const`:** sem problema, `root.material = &plastic_` guarda um `const Material*`.
+- **Mesma instância em vários lugares:** todas as cópias (6 carteiras) apontam para o mesmo material; mudar o membro
+  muda todas.
+- **Conferir:** `kDebugMode = 3` em `src/gfx/renderer.cpp` mostra a cor do material sem luz; volte para 0.
+- Textura nova vai para `assets/textures/` com a linha na tabela de licenças, no mesmo commit.
