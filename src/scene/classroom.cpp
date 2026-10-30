@@ -234,6 +234,17 @@ void Classroom::update(const Input& input, float deltaTime) {
         screen_.toggle();
     }
     screen_.update(deltaTime);
+    // Ventilador (CG-76): V liga/desliga; Shift+V troca a velocidade. A atualização roda todo frame para a
+    // hélice continuar desacelerando depois de desligar.
+    if (input.keyPressed(GLFW_KEY_V)) {
+        const bool shift = input.keyDown(GLFW_KEY_LEFT_SHIFT) || input.keyDown(GLFW_KEY_RIGHT_SHIFT);
+        if (shift) {
+            fan_.cycleSpeed();
+        } else {
+            fan_.toggle();
+        }
+    }
+    fan_.update(deltaTime);
     // Interações (CG-75, CG-76, CG-77) e animações entram aqui.
 }
 
