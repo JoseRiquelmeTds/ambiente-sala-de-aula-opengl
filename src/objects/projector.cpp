@@ -132,6 +132,10 @@ glm::vec3 Projector::lensDirection() const {
     return glm::normalize(glm::vec3(headTransform() * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));
 }
 
+glm::vec3 Projector::lensUp() const {
+    return glm::normalize(glm::vec3(headTransform() * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
+}
+
 void Projector::setOn(bool on) {
     on_ = on;
     lensGlass_.emissive = on ? kLensLitEmissive : glm::vec3(0.0f);

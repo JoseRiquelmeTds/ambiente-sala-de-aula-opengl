@@ -12,6 +12,7 @@
 #include "gfx/material.hpp"
 #include "gfx/scene_node.hpp"
 #include "gfx/shader.hpp"
+#include "gfx/texture.hpp"
 
 namespace renderer {
 
@@ -20,6 +21,10 @@ namespace {
 // Modo do fragment shader básico: 0 = iluminado (Blinn-Phong), 1 = normal como cor,
 // 2 = UV como cor, 3 = cor do material sem luz. Os modos 1 a 3 servem para depurar normais e UVs.
 constexpr int kDebugMode = 0;
+
+// Unidade de textura do slide do projetor (CG-77). A 0 é da cor difusa do material
+// (kDiffuseTextureUnit), religada por Material::apply a cada peça; a 1 fica com o slide o frame todo.
+constexpr int kProjectorTextureUnit = 1;
 
 std::unique_ptr<Shader> basicShader;
 float aspectRatio = 1.0f;
@@ -61,6 +66,23 @@ void setLighting(const Shader& shader, const Lighting& lighting) {
         ++count;
     }
     shader.setInt("uPointLightCount", count);
+
+    // Projetor (CG-77): sem slide válido não há o que projetar, mesmo ligado.
+    const ProjectorLight& projector = lighting.projector;
+    const bool projectorOn = projector.enabled && projector.image != nullptr && projector.image->isValid();
+    shader.setInt("uProjector.enabled", projectorOn ? 1 : 0);
+    if (projectorOn) {
+        // bind troca a unidade ativa para a 1; Material::apply liga a textura difusa dizendo a
+        // unidade 0 explicitamente, então a ordem não importa.
+        projector.image->bind(kProjectorTextureUnit);
+        shader.setMat4("uProjector.viewProjection", projector.viewProjection);
+        shader.setVec3("uProjector.position", projector.position);
+        shader.setVec3("uProjector.color", projector.color);
+        shader.setFloat("uProjector.referenceDistance", projector.referenceDistance);
+    }
+    // Sempre, mesmo desligado: o sampler recebe o NÚMERO da unidade e, sem isso, ficaria na 0, a da
+    // textura difusa.
+    shader.setInt("uProjector.image", kProjectorTextureUnit);
 }
 
 }  // namespace

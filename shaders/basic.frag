@@ -50,6 +50,21 @@ uniform DirectionalLight uWindowLight;
 uniform PointLight uPointLights[kMaxPointLights];
 uniform int uPointLightCount;  // quantas posições do array valem neste frame (luzes ligadas)
 
+// --- Projetor (CG-77) --------------------------------------------------------
+// Mesma struct de include/gfx/light.hpp (ProjectorLight); quem envia é renderer::draw.
+// AB2 · Projeção: textura projetiva. O projetor é tratado como uma câmera: viewProjection leva o
+// fragmento ao espaço de clip dele, e a posição na imagem dessa "câmera" é a UV do slide. É uma luz
+// que carrega uma imagem: cada texel ilumina o ponto da cena que ele atinge.
+struct ProjectorLight {
+    bool enabled;
+    mat4 viewProjection;      // mundo -> clip do projetor
+    vec3 position;            // centro da lente, mundo
+    vec3 color;               // força do feixe na distância de referência
+    float referenceDistance;  // metros: a força é color nessa distância e cai com o quadrado dela
+    sampler2D image;          // slide, unidade kProjectorTextureUnit (1)
+};
+uniform ProjectorLight uProjector;
+
 // Difusa + especular de UMA luz, com L = direção do fragmento PARA a luz (unitária).
 // N e V também unitários: com vetores unitários, dot() é o cosseno do ângulo entre eles.
 vec3 blinnPhong(vec3 lightColor, vec3 L, vec3 N, vec3 V, vec3 albedo) {
@@ -67,6 +82,29 @@ vec3 blinnPhong(vec3 lightColor, vec3 L, vec3 N, vec3 V, vec3 albedo) {
     }
 
     return lightColor * (diffuse * albedo + specular * uMaterial.specular);
+}
+
+// AB2 · Projeção: luz do projetor no fragmento. clip -> ÷w -> NDC [-1, 1] -> ×0,5 + 0,5 -> UV [0, 1];
+// fora do frustum (ou atrás da lente) não chega luz. Só difusa: a lona é fosca, e o reflexo da lente
+// seria um ponto minúsculo. Sem shadow map, a imagem também atravessa o que está na frente (cai
+// atrás da lona, no quadro), escondido pela própria lona para quem está na sala.
+vec3 projectorLight(vec3 N, vec3 albedo) {
+    if (!uProjector.enabled) {
+        return vec3(0.0);
+    }
+    vec4 clip = uProjector.viewProjection * vec4(vWorldPos, 1.0);
+    if (clip.w <= 0.0) {
+        return vec3(0.0);  // atrás da lente: a divisão inverteria o sinal (slide espelhado nas costas)
+    }
+    vec2 uv = clip.xy / clip.w * 0.5 + 0.5;  // NDC [-1, 1] -> UV [0, 1]
+    if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) {
+        return vec3(0.0);  // fora do frustum do projetor
+    }
+    vec3 toLens = uProjector.position - vWorldPos;
+    float d = length(toLens);
+    float lambert = max(dot(N, toLens / d), 0.0);
+    float falloff = (uProjector.referenceDistance * uProjector.referenceDistance) / (d * d);
+    return albedo * texture(uProjector.image, uv).rgb * uProjector.color * lambert * falloff;
 }
 
 vec3 shade(vec3 albedo) {
@@ -89,6 +127,9 @@ vec3 shade(vec3 albedo) {
                                    uPointLights[i].quadratic * d * d);
         color += attenuation * blinnPhong(uPointLights[i].color, toLight / d, N, V, albedo);
     }
+
+    // AB2 · Projeção: o slide entra como mais uma luz, somada às outras (CG-77).
+    color += projectorLight(N, albedo);
     return color;
 }
 

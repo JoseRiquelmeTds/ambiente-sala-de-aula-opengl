@@ -57,6 +57,9 @@ public:
     // inclinação: origem e direção da projeção (CG-77).
     glm::vec3 lensCenter() const;
     glm::vec3 lensDirection() const;
+    // "Cima" da imagem projetada, no espaço do projetor: o +Y da cabeça, inclinado junto com ela
+    // (perpendicular a lensDirection). É o up do lookAt da projeção (CG-77).
+    glm::vec3 lensUp() const;
 
     // Liga ou desliga o projetor (CG-77). Aqui só a lente muda: ligada, ela brilha (emissive do
     // vidro). A luz que leva o slide até a tela é a Lighting::projector, que a scene/classroom liga
