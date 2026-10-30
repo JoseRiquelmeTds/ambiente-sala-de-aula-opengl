@@ -31,6 +31,13 @@ constexpr glm::vec3 kLensBase(0.0f, -(kBracketSize.y + kBodySize.y * 0.5f), kBod
 // puxando para o azul, como a lâmpada de projetor.
 constexpr glm::vec3 kLensLitEmissive(0.85f, 0.90f, 1.0f);
 
+// Slides projetados (CG-77), em 4:3 como a imagem do projetor. A ordem é a da apresentação.
+constexpr const char* kSlidePaths[] = {
+    "assets/textures/slide_cg_1.png",  // pipeline gráfico
+    "assets/textures/slide_cg_2.png",  // eixos X, Y e Z
+    "assets/textures/slide_cg_3.png",  // triângulo com cores interpoladas
+};
+
 // Plástico do gabinete repete a textura a cada 25 cm; a lente estica a imagem.
 constexpr float kMaterialTextureSize = 0.25f;
 
@@ -63,6 +70,10 @@ Projector::Projector()
     lensGlass_.specular = glm::vec3(0.90f);
     lensGlass_.shininess = 128.0f;
     lensGlass_.emissive = glm::vec3(0.0f);  // começa apagado; setOn acende (CG-77)
+
+    for (const char* path : kSlidePaths) {
+        slides_.push_back(std::make_unique<Texture>(path, Texture::Wrap::ClampToEdge));
+    }
 }
 
 SceneNode& Projector::addTo(SceneNode& parent, const glm::mat4& placement) {
@@ -128,6 +139,17 @@ void Projector::setOn(bool on) {
 
 void Projector::toggle() {
     setOn(!on_);
+}
+
+const Texture* Projector::currentSlide() const {
+    // Começa no slide atual e, se ele não carregou, segue para o próximo válido.
+    for (std::size_t i = 0; i < slides_.size(); ++i) {
+        const Texture& slide = *slides_[(currentSlide_ + i) % slides_.size()];
+        if (slide.isValid()) {
+            return &slide;
+        }
+    }
+    return nullptr;
 }
 
 glm::mat4 Projector::headTransform() const {

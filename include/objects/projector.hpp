@@ -3,6 +3,10 @@
 
 #include <glm/glm.hpp>
 
+#include <cstddef>
+#include <memory>
+#include <vector>
+
 #include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
@@ -61,6 +65,10 @@ public:
     void toggle();
     bool isOn() const { return on_; }
 
+    // Slide que o projetor mostra (CG-77): imagens 4:3 carregadas no construtor. nullptr se
+    // nenhuma carregou (o erro [Texture] já foi impresso); slide que falhou é pulado.
+    const Texture* currentSlide() const;
+
 private:
     glm::mat4 headTransform() const;
 
@@ -76,6 +84,10 @@ private:
     Material metal_;      // placa do teto e haste
     Material plastic_;    // suporte e corpo
     Material lensGlass_;  // lente; o emissive acende com o projetor ligado (setOn, CG-77)
+    // Slides (CG-77), donos. ClampToEdge: a imagem aparece uma vez só e a borda não pode vazar
+    // para o lado oposto no filtro linear.
+    std::vector<std::unique_ptr<Texture>> slides_;
+    std::size_t currentSlide_ = 0;
 
     // Não donos: nós criados em addTo, que vivem na árvore do pai.
     SceneNode* root_ = nullptr;
