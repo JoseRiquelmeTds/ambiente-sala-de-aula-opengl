@@ -3,8 +3,10 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
+#include "gfx/texture.hpp"
 
 namespace objects {
 
@@ -19,8 +21,11 @@ namespace objects {
 //  Metros, Y para cima. Pivô no chão, no centro entre os 4 pés. Frente (+Z) é o lado onde o
 //  aluno senta: é por ali que a cadeira entra e que o porta-livros abre.
 //
-//  Cria meshes: construir com o contexto OpenGL ativo e manter vivo enquanto a árvore da cena
-//  apontar para eles.
+//  Materiais (CG-74): tubo de aço grafite e tampo de laminado madeirado, os dois de
+//  objects/furniture_style.hpp (a cadeira usa os mesmos), e ponteiras de plástico preto.
+//
+//  Cria meshes e textura: construir com o contexto OpenGL ativo e manter vivo enquanto a árvore
+//  da cena apontar para eles.
 class StudentDesk {
 public:
     StudentDesk();
@@ -34,10 +39,17 @@ public:
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement) const;
 
 private:
-    // Um mesh por material futuro (CG-72): cada um vai receber o seu.
+    // Um mesh por material: cada peça aponta para o seu.
     Mesh frame_;  // estrutura soldada + porta-livros: metal
     Mesh top_;    // tampo: MDF com laminado
     Mesh foot_;   // ponteira de plástico, usada pelos 4 pés
+
+    // Os nós da árvore apontam para estes materiais, e o laminado aponta para a textura: a
+    // textura vem antes do material na declaração, porque os membros são construídos nessa ordem.
+    Texture boardTexture_;
+    Material tube_;
+    Material board_;
+    Material footPlastic_;
 };
 
 }  // namespace objects
