@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/shader.hpp"
 
@@ -41,6 +42,13 @@
 //  Um mesh pode ser usado por várias peças (as 4 pernas da cadeira apontam para o mesmo
 //  Mesh): a peça só guarda um ponteiro e quem cria o Mesh continua sendo o dono dele, então
 //  o Mesh tem que existir enquanto as peças forem desenhadas.
+//
+//  Material (CG-72) funciona igual: ponteiro não dono e HERDADO. Peça com material = nullptr
+//  usa o do pai (que pode ter herdado do avô...). Basta definir na raiz do objeto e sobrescrever
+//  nas peças diferentes:
+//
+//      cadeira.material = &madeira;     // assento, encosto e tudo abaixo
+//      perna.material = &metal;         // só a perna e os filhos dela
 class SceneNode {
 public:
     explicit SceneNode(const Mesh* mesh = nullptr, const glm::mat4& transform = glm::mat4(1.0f));
@@ -50,8 +58,10 @@ public:
     SceneNode& addChild(const Mesh* mesh, const glm::mat4& transform = glm::mat4(1.0f));
 
     // Desenha esta peça e todos os descendentes. Chamar com o shader já em uso (shader.use()).
-    // Define os uniforms "uModel" e "uNormalMatrix" de cada peça antes de desenhá-la.
-    void draw(const Shader& shader, const glm::mat4& parentModel = glm::mat4(1.0f)) const;
+    // Define os uniforms "uModel", "uNormalMatrix" e "uMaterial" de cada peça antes de desenhá-la.
+    // inheritedMaterial é o material do pai; na raiz, o padrão de quem desenha (o renderer).
+    void draw(const Shader& shader, const Material& inheritedMaterial,
+              const glm::mat4& parentModel = glm::mat4(1.0f)) const;
 
     // Filhos diretos, na ordem em que foram criados (ex.: a inspeção esconde todos menos um).
     std::size_t childCount() const { return children_.size(); }
@@ -59,6 +69,7 @@ public:
 
     const Mesh* mesh;
     glm::mat4 transform;
+    const Material* material = nullptr;  // não dono; nullptr = herda o do pai
     bool visible = true;  // false esconde a peça e os filhos (ex.: tela totalmente recolhida)
 
 private:

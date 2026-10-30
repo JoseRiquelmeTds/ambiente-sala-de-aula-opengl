@@ -7,14 +7,24 @@ in vec2 vUV;
 out vec4 FragColor;
 
 // Modo de cor (definido pelo renderer, src/gfx/renderer.cpp):
-//   0 = iluminado (Blinn-Phong): textura como cor difusa + luzes da cena. Padrão.
+//   0 = iluminado (Blinn-Phong): material da peça + luzes da cena. Padrão.
 //   1 = normal como cor: cada eixo vira um canal (x -> R, y -> G, z -> B)
-//   2 = UV como cor: u -> R, v -> G
-//   3 = textura sem luz (uTexture amostrada pela UV)
+//   2 = UV como cor: u -> R, v -> G (UV do mesh, sem o uvScale do material)
+//   3 = cor difusa do material sem luz (textura × diffuse)
 uniform int uDebugMode;
 
-// Textura ligada na unidade indicada por setInt("uTexture", unidade) (veja include/gfx/texture.hpp).
-uniform sampler2D uTexture;
+// --- Material da peça (CG-72) -----------------------------------------------
+// Mesmos campos de include/gfx/material.hpp; quem envia é Material::apply, peça por peça.
+struct Material {
+    vec3 diffuse;           // cor difusa; com textura, tinge a textura
+    bool hasDiffuseMap;     // false: diffuseMap não é lido (só a cor)
+    sampler2D diffuseMap;   // unidade kDiffuseTextureUnit
+    vec2 uvScale;           // repetições da textura (tiling)
+    vec3 specular;          // cor do reflexo
+    float shininess;        // expoente do reflexo (>= 1)
+    vec3 emissive;          // luz própria, somada sem depender das luzes
+};
+uniform Material uMaterial;
 
 // --- Iluminação (CG-71) ------------------------------------------------------
 // Structs e limite iguais aos de include/gfx/light.hpp; quem envia é renderer::draw.
@@ -40,12 +50,8 @@ uniform DirectionalLight uFillLight;
 uniform PointLight uPointLights[kMaxPointLights];
 uniform int uPointLightCount;  // quantas posições do array valem neste frame (luzes ligadas)
 
-// Material provisório, igual para a cena toda, até existir material por peça (CG-72).
-const vec3 kSpecularColor = vec3(0.3);  // reflexo branco fraco
 // Abaixo deste comprimento um vetor é tratado como nulo: normalizá-lo dividiria por zero.
 const float kEpsilon = 1e-4;
-
-const float kShininess = 32.0;          // tamanho do brilho: maior = brilho menor e mais concentrado
 
 // Difusa + especular de UMA luz, com L = direção do fragmento PARA a luz (unitária).
 // N e V também unitários: com vetores unitários, dot() é o cosseno do ângulo entre eles.
@@ -55,6 +61,7 @@ vec3 blinnPhong(vec3 lightColor, vec3 L, vec3 N, vec3 V, vec3 albedo) {
 
     // Especular (Blinn): H fica no meio entre a luz e o olho. Quanto mais H se alinha com a
     // normal, mais o fragmento reflete a luz direto para a câmera.
+    // O shininess controla o tamanho do brilho: maior = brilho menor e mais concentrado.
     // Se L e V apontam em sentidos opostos (luz exatamente atrás da superfície, vista de frente),
     // L + V é nulo e normalize() dividiria por zero: nesse caso não há reflexo para a câmera.
     vec3 halfSum = L + V;
@@ -62,14 +69,14 @@ vec3 blinnPhong(vec3 lightColor, vec3 L, vec3 N, vec3 V, vec3 albedo) {
     float specular = 0.0;
     if (halfLength > kEpsilon) {
         vec3 H = halfSum / halfLength;
-        specular = pow(max(dot(N, H), 0.0), kShininess);
+        specular = pow(max(dot(N, H), 0.0), uMaterial.shininess);
     }
     // Face de costas para a luz não tem reflexo (evita brilho "vazando" para o lado escuro).
     if (diffuse <= 0.0) {
         specular = 0.0;
     }
 
-    return lightColor * (diffuse * albedo + specular * kSpecularColor);
+    return lightColor * (diffuse * albedo + specular * uMaterial.specular);
 }
 
 vec3 shade(vec3 albedo) {
@@ -77,8 +84,9 @@ vec3 shade(vec3 albedo) {
     vec3 N = normalize(vNormal);
     vec3 V = normalize(uViewPos - vWorldPos);
 
+    // Emissiva: a superfície brilha sozinha (não é afetada por nenhuma luz).
     // Ambiente: constante, não depende de direção. Impede que faces de costas fiquem pretas.
-    vec3 color = uAmbient * albedo;
+    vec3 color = uMaterial.emissive + uAmbient * albedo;
 
     // Preenchimento: direcional, sem atenuação. L é o oposto da direção em que a luz viaja.
     color += blinnPhong(uFillLight.color, normalize(-uFillLight.direction), N, V, albedo);
@@ -95,6 +103,17 @@ vec3 shade(vec3 albedo) {
     return color;
 }
 
+// Cor difusa (albedo) da peça: a cor do material, multiplicada pela textura quando houver.
+// Multiplicar permite tingir uma textura cinza (a mesma madeira em tons diferentes).
+vec3 albedo() {
+    if (!uMaterial.hasDiffuseMap) {
+        return uMaterial.diffuse;
+    }
+    // texture() busca a cor na posição (u, v) da imagem, já com wrap e filtro aplicados:
+    // UV fora de 0..1 repete (GL_REPEAT) e entre dois texels a cor é misturada (GL_LINEAR).
+    return uMaterial.diffuse * texture(uMaterial.diffuseMap, vUV * uMaterial.uvScale).rgb;
+}
+
 void main() {
     if (uDebugMode == 1) {
         // A normal vai de -1 a 1 e a cor de 0 a 1: n * 0.5 + 0.5 faz essa conversão.
@@ -103,11 +122,9 @@ void main() {
     } else if (uDebugMode == 2) {
         FragColor = vec4(vUV, 0.0, 1.0);
     } else if (uDebugMode == 3) {
-        // texture() busca a cor na posição (u, v) da imagem, já com wrap e filtro aplicados:
-        // UV fora de 0..1 repete (GL_REPEAT) e entre dois texels a cor é misturada (GL_LINEAR).
-        FragColor = texture(uTexture, vUV);
+        FragColor = vec4(albedo(), 1.0);
     } else {
         // Soma de várias luzes pode passar de 1; o OpenGL corta em 1 ao gravar a cor.
-        FragColor = vec4(shade(texture(uTexture, vUV).rgb), 1.0);
+        FragColor = vec4(shade(albedo()), 1.0);
     }
 }

@@ -9,22 +9,26 @@
 
 #include "core/camera.hpp"
 #include "gfx/light.hpp"
+#include "gfx/material.hpp"
 #include "gfx/scene_node.hpp"
 #include "gfx/shader.hpp"
-#include "gfx/texture.hpp"
 
 namespace renderer {
 
 namespace {
 
 // Modo do fragment shader básico: 0 = iluminado (Blinn-Phong), 1 = normal como cor,
-// 2 = UV como cor, 3 = textura sem luz. Os modos 1 a 3 servem para depurar normais e UVs.
+// 2 = UV como cor, 3 = cor do material sem luz. Os modos 1 a 3 servem para depurar normais e UVs.
 constexpr int kDebugMode = 0;
 
 std::unique_ptr<Shader> basicShader;
 float aspectRatio = 1.0f;
 bool drawable = false;
 bool warnedTooManyLights = false;
+
+// Material das peças que não têm material nem herdam um: objetos ainda sem material aparecem
+// em cinza claro fosco, iluminados, em vez de pretos ou com a cor da peça desenhada antes.
+const Material kDefaultMaterial = materials::neutral();
 
 // Envia as luzes para os uniforms do shader (nomes e structs em shaders/basic.frag).
 void setLighting(const Shader& shader, const Lighting& lighting) {
@@ -68,7 +72,7 @@ void init() {
     basicShader = std::make_unique<Shader>("shaders/basic.vert", "shaders/basic.frag");
 }
 
-void draw(const Camera& camera, const SceneNode& root, const Texture* texture, const Lighting& lighting) {
+void draw(const Camera& camera, const SceneNode& root, const Lighting& lighting) {
     if (!drawable) {
         return;  // framebuffer minimizado ou ainda sem tamanho válido
     }
@@ -86,14 +90,8 @@ void draw(const Camera& camera, const SceneNode& root, const Texture* texture, c
     basicShader->setVec3("uViewPos", camera.position());
     setLighting(*basicShader, lighting);
 
-    // Liga a textura na unidade 0 e diz ao sampler2D para ler dessa unidade.
-    if (texture != nullptr) {
-        texture->bind(0);
-    }
-    basicShader->setInt("uTexture", 0);
-
-    // Cada peça define o próprio uModel antes de desenhar.
-    root.draw(*basicShader);
+    // Cada peça define o próprio uModel, a normal matrix e o material antes de desenhar.
+    root.draw(*basicShader, kDefaultMaterial);
 }
 
 void resize(int width, int height) {
