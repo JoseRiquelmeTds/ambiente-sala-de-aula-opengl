@@ -56,11 +56,11 @@ constexpr float kLampQuadratic = 0.07f;
 // Baixa o bastante para as faces voltadas às lâmpadas continuarem mais claras que as outras.
 constexpr glm::vec3 kAmbientLight(0.25f, 0.25f, 0.26f);
 
-// Janelas na parede esquerda (-X), à esquerda de quem olha para o quadro, como recomendado para
-// salas de aula (a mão direita não faz sombra no caderno). A luz do dia entra para +X e desce.
-// Fraca e levemente azulada: só preenche o lado que as lâmpadas iluminam menos.
-constexpr glm::vec3 kWindowDirection(1.0f, -0.6f, 0.15f);
-constexpr glm::vec3 kWindowColor(0.16f, 0.17f, 0.19f);
+// Luz de preenchimento: direcional, representa a claridade do dia (a sala não tem janela modelada).
+// Vem da esquerda (-X) de quem olha para o quadro, lado onde as salas costumam ter janelas, viaja
+// para +X e desce. Fraca e levemente azulada: só dá volume às faces que as lâmpadas iluminam de lado.
+constexpr glm::vec3 kFillDirection(1.0f, -0.6f, 0.15f);
+constexpr glm::vec3 kFillColor(0.16f, 0.17f, 0.19f);
 
 // Ponto no espaço do objeto levado para o mundo: o enquadramento acompanha o placement.
 glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
@@ -77,8 +77,8 @@ Classroom::Classroom()
     room_.addTo(root_, glm::mat4(1.0f));
 
     lighting_.ambient = kAmbientLight;
-    lighting_.window.direction = kWindowDirection;
-    lighting_.window.color = kWindowColor;
+    lighting_.fill.direction = kFillDirection;
+    lighting_.fill.color = kFillColor;
 
     // Duas colunas, três fileiras: corredor central de 1,90 m e passo de 1,50 m entre fileiras.
     // No modelo real, +Z é o lado do ALUNO (porta-livros aberto), não a direção do olhar.
