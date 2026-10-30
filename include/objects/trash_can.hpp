@@ -3,8 +3,10 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
+#include "gfx/texture.hpp"
 
 namespace objects {
 
@@ -24,7 +26,11 @@ namespace objects {
 //      fundo externo    disco em y = 0, normal -Y
 //      piso interno     disco em y = 8 mm, normal +Y
 //
-//  Criar com contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes.
+//  Material (CG-78): polipropileno azul com textura (plastico_lixeira.png) na peça inteira, um
+//  material só, na raiz. A UV do mesh já está em metros / 0,25, então o uvScale fica 1.
+//
+//  Criar com contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes, a textura e
+//  o material.
 class TrashCan {
 public:
     TrashCan();
@@ -32,11 +38,14 @@ public:
     TrashCan(const TrashCan&) = delete;
     TrashCan& operator=(const TrashCan&) = delete;
 
-    // Pode ser chamada várias vezes: todas as instâncias usam o mesmo mesh.
+    // Pode ser chamada várias vezes: todas as instâncias usam o mesmo mesh e o mesmo material.
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement) const;
 
 private:
     Mesh body_;
+    // A textura vem antes do material que aponta para ela: os membros são construídos nessa ordem.
+    Texture plasticTexture_;
+    Material plastic_;
 };
 
 }  // namespace objects

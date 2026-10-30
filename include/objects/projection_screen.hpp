@@ -3,8 +3,10 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
+#include "gfx/texture.hpp"
 
 namespace objects {
 
@@ -27,9 +29,15 @@ namespace objects {
 //
 //  UV da lona: a imagem inteira na face (textureSize = 0), para o slide da CG-77. Ao recolher,
 //  a UV continua de 0 a 1 e a imagem achata em Y. A distorção é aceita: a lona é lisa e o slide
-//  só aparece com a tela aberta.
+//  só aparece com a tela aberta. A trama da lona (lona_tela.png) repete pelo uvScale do material,
+//  a cada 25 cm nos dois eixos.
 //
-//  Criar com contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes.
+//  Materiais (CG-78): caixa e suportes de plástico branco-gelo (na raiz); lona fosca branca com a
+//  textura de trama (na articulação); barra inferior de alumínio, cordinha cinza-escura fosca e
+//  puxador de plástico preto (na ponta).
+//
+//  Criar com contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes, a textura e
+//  os materiais.
 class ProjectionScreen {
 public:
     ProjectionScreen();
@@ -57,6 +65,16 @@ private:
     Mesh bottomBar_;
     Mesh cord_;
     Mesh handle_;
+
+    // Os nós da árvore apontam para estes materiais, e a lona aponta para a textura: a textura vem
+    // antes do material na declaração, porque os membros são construídos nessa ordem.
+    Texture canvasTexture_;
+    Material housingPlastic_;  // caixa e suportes laterais
+    Material canvasMaterial_;  // lona; a CG-75 ajusta o uvScale.y conforme a abertura
+    Material barMetal_;        // barra inferior
+    Material cordMatte_;       // cordinha
+    Material handlePlastic_;   // puxador
+
     // Não donos: nós criados em addTo, que vivem na árvore do pai.
     SceneNode* root_ = nullptr;
     SceneNode* canvasPivot_ = nullptr;
