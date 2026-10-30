@@ -71,6 +71,10 @@ public:
     // Slide que o projetor mostra (CG-77): imagens 4:3 carregadas no construtor. nullptr se
     // nenhuma carregou (o erro [Texture] já foi impresso); slide que falhou é pulado.
     const Texture* currentSlide() const;
+    // Próximo / anterior, em ciclo (do último volta ao primeiro). Funciona desligado também: a imagem
+    // nova aparece quando ligar.
+    void nextSlide();
+    void previousSlide();
 
 private:
     glm::mat4 headTransform() const;

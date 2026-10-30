@@ -288,9 +288,17 @@ void Classroom::update(const Input& input, float deltaTime) {
         }
     }
     fan_.update(deltaTime);
-    // Projetor (CG-77): P liga/desliga.
+    // Projetor (CG-77): P liga/desliga; ← e → trocam o slide (a imagem troca mesmo desligado).
     if (input.keyPressed(GLFW_KEY_P)) {
         setProjectorOn(!projectorOn_);
+    }
+    if (input.keyPressed(GLFW_KEY_RIGHT)) {
+        projector_.nextSlide();
+        lighting_.projector.image = projector_.currentSlide();
+    }
+    if (input.keyPressed(GLFW_KEY_LEFT)) {
+        projector_.previousSlide();
+        lighting_.projector.image = projector_.currentSlide();
     }
     // Interações (CG-75, CG-76, CG-77) e animações entram aqui.
 }

@@ -145,6 +145,18 @@ void Projector::toggle() {
     setOn(!on_);
 }
 
+void Projector::nextSlide() {
+    if (!slides_.empty()) {
+        currentSlide_ = (currentSlide_ + 1) % slides_.size();
+    }
+}
+
+void Projector::previousSlide() {
+    if (!slides_.empty()) {
+        currentSlide_ = (currentSlide_ + slides_.size() - 1) % slides_.size();
+    }
+}
+
 const Texture* Projector::currentSlide() const {
     // Começa no slide atual e, se ele não carregou, segue para o próximo válido.
     for (std::size_t i = 0; i < slides_.size(); ++i) {
