@@ -157,8 +157,8 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `T` | Tela retrátil: abre / recolhe (a tela começa recolhida) | `scene/classroom` | CG-75 | em uso |
 | `V` | Ventilador: liga / desliga (acelera ao ligar, desacelera até parar ao desligar) | `scene/classroom` | CG-76 | em uso |
 | `Shift` + `V` | Ventilador: troca a velocidade (2, 3, 4 voltas/s), também com ele desligado | `scene/classroom` | CG-76 | em uso |
-| `P` | Projetor: liga / desliga | `scene/classroom` | CG-77 | reservada |
-| `←` / `→` | Slide anterior / próximo | `scene/classroom` | CG-77 (opcional) | reservada |
+| `P` | Projetor: liga / desliga (começa desligado) | `scene/classroom` | CG-77 | em uso |
+| `←` / `→` | Slide anterior / próximo, em ciclo (troca mesmo com o projetor desligado) | `scene/classroom` | CG-77 | em uso |
 | `L` | Luz: liga / desliga (a sala começa acesa) | `scene/classroom` | CG-73 | em uso |
 
 As seleções funcionam com o cursor livre e reenquadram a câmera. Após uma tecla numérica, `[` e `]` continuam

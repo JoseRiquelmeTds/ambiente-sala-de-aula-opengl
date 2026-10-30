@@ -338,7 +338,7 @@ Funciona com a janela em foco, mesmo com o cursor livre; índice sem alvo é ign
 A perda de foco libera o cursor e exige novo clique para retomar a navegação; com o cursor livre não há movimento
 nem rotação pelo mouse.
 
-### Projetor e tela retrátil (CG-65, CG-66)
+### Projetor e tela retrátil (CG-65, CG-66, CG-77)
 
 A projeção precisa cair na tela, mas nenhum dos dois objetos conhece o outro nem a própria posição na sala
 (camada `objects/`). Quem alinha é `scene/classroom`, com mudanças de espaço:
@@ -352,9 +352,17 @@ projector_.aimAt(toWorld(glm::inverse(projectorPlacement), screenCenter));
 `Projector::aimAt` gira só a articulação da cabeça em X (inclinação), calculando o ângulo para o **eixo da lente**,
 que fica abaixo do pivô, cruzar o alvo; o giro em Y é do placement. Com as posições preservadas na CG-69, a
 inclinação é de ~12,5° e a lente fica a ~2,9 m da lona: throw ratio de ~1,45 para a imagem de 2,0 m. Como o
-alinhamento é calculado, mover a tela ou o projetor não exige ajustar ângulo nenhum. `lensCenter()` e
-`lensDirection()` dão a origem e a direção da projeção para a CG-77. Com o projetor inclinado e a tela vertical, a
-imagem real seria um trapézio (keystone): a CG-77 pode desenhar o slide direto na lona.
+alinhamento é calculado, mover a tela ou o projetor não exige ajustar ângulo nenhum.
+
+A projeção (CG-77) não desenha o slide na lona: é **textura projetiva**. `lensCenter()`, `lensDirection()` e
+`lensUp()` dão a origem, o eixo e o "cima" da imagem no espaço do projetor; a `Classroom` os leva ao mundo e
+monta uma view (`lookAt` na lente) e uma projeção (`perspective`, fov pelo throw ratio e `canvasSize()` da tela)
+como as de uma câmera. O resultado vai em `Lighting::projector` (`gfx/light.hpp`), uma luz que carrega o slide:
+o fragment shader leva cada fragmento ao espaço do projetor e, dentro do frustum, o texel ilumina o fragmento.
+A imagem cai onde o feixe bater, com o trapézio do keystone, e com a tela recolhida aparece no quadro e na
+parede. O `Projector` é dono dos slides (`currentSlide`, `nextSlide`, `previousSlide`) e da lente, que acende
+com `setOn`; a tecla `P` e as setas ficam em `Classroom::update`. Técnica, números e limitações:
+[ILUMINACAO.md § 10](ILUMINACAO.md#10-projetor-textura-projetiva-cg-77).
 
 A tela anima a abertura (CG-75) mudando só a `transform` da articulação da lona, `T(fenda) · S(1, s, 1)` com o
 pivô no topo, então a lona desce sem descolar da caixa; a barra inferior acompanha por translação. `toggle()` inverte

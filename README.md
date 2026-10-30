@@ -84,11 +84,13 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `T` | Abre / recolhe a tela retrátil, com animação suave; apertar no meio do curso inverte o sentido |
 | `V` | Liga / desliga o ventilador (começa desligado) |
 | `Shift` + `V` | Troca a velocidade do ventilador: 2, 3 ou 4 voltas/s (começa na mais rápida) |
+| `P` | Liga / desliga o projetor: o slide aparece na tela e a lente acende (começa desligado) |
+| `←` / `→` | Slide anterior / próximo do projetor, em ciclo |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
 Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`), a luz (`L`), a
-tela (`T`) e o ventilador (`V`) funcionam mesmo assim.
+tela (`T`), o ventilador (`V`) e o projetor (`P`, `←` e `→`) funcionam mesmo assim.
 As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
 Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona o quadro. O ciclo retorna do último alvo ao primeiro
 e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
@@ -164,9 +166,13 @@ barra inferior de alumínio, cordinha cinza-escura e puxador de plástico preto.
 O projetor (CG-65) fica preso ao teto a cerca de 2,9 m da tela, com corpo de 0,30 × 0,10 × 0,25 m e a lente como peça
 separada (a CG-77 dá brilho a ela). A origem local é o ponto de fixação no teto, com frente (lente) +Z.
 `objects::Projector::aimAt(alvo)` inclina a cabeça para o eixo da lente passar pelo alvo; a `Classroom` usa o centro
-da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P` e a projeção ficam para a CG-77.
-Materiais (CG-78): placa do teto e haste de metal grafite, suporte e corpo de plástico cinza texturizado
-(`plastico_projetor.png`) e lente de vidro escuro e brilhante, com material próprio que a CG-77 acende.
+da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P` (CG-77) liga o projetor: a lente
+acende e o slide é projetado por textura projetiva, como uma luz que carrega a imagem, e cai onde o feixe bater
+(na lona aberta ou, com ela recolhida, no quadro e na parede), num trapézio levemente mais largo embaixo
+(keystone). `←` e `→` trocam entre três slides (`slide_cg_1.png` a `slide_cg_3.png`). Técnica em
+[docs/ILUMINACAO.md § 10](docs/ILUMINACAO.md#10-projetor-textura-projetiva-cg-77). Materiais (CG-78): placa do teto
+e haste de metal grafite, suporte e corpo de plástico cinza texturizado (`plastico_projetor.png`) e lente de vidro
+escuro e brilhante, com material próprio que acende com o projetor ligado.
 
 A lixeira (CG-67) é um tronco de cone oco de 0,30 m de diâmetro na boca e 0,40 m de altura, com parede de 6 mm e
 borda com espessura, no chão ao lado da região do quadro. Pivô no centro do fundo.
