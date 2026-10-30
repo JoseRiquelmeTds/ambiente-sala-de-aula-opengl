@@ -71,6 +71,8 @@ public:
 
     // Centro da face da frente da lona aberta, no espaço da tela: o alvo do projetor (CG-65).
     glm::vec3 canvasCenter() const;
+    // Largura e altura da lona aberta, em metros (2,0 x 1,5): o tamanho da imagem do projetor (CG-77).
+    glm::vec2 canvasSize() const;
 
 private:
     void applyOpenAmount();

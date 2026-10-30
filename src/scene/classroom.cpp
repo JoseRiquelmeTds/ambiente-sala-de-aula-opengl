@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cmath>
 #include <cstddef>
 #include <initializer_list>
 
@@ -66,6 +67,24 @@ constexpr glm::vec3 kAmbientLightOff(0.20f, 0.21f, 0.23f);
 // Fraca e levemente azulada: só preenche o lado que as lâmpadas iluminam menos.
 constexpr glm::vec3 kWindowDirection(1.0f, -0.6f, 0.15f);
 constexpr glm::vec3 kWindowColor(0.16f, 0.17f, 0.19f);
+
+// --- Projetor (CG-77), técnica em docs/ILUMINACAO.md § 10 ---------------------
+// Fração da largura da lona que a imagem ocupa no centro. Com o projetor inclinado ~12,5° para baixo,
+// a borda de baixo da imagem fica mais longe da lente que a de cima e sai mais larga (keystone): com
+// 92%, o trapézio inteiro cai na lona (base de ~1,94 m e de ~1,33 a ~2,74 m de altura, com a lona de
+// 1,32 a 2,82 m). Com 95%, a base já passaria da lona.
+constexpr float kImageFill = 0.92f;
+constexpr float kSlideAspect = 4.0f / 3.0f;  // slides de 1024 x 768
+// Frustum do projetor, em metros: começa logo à frente da lente e passa da parede mais distante.
+constexpr float kProjectorNear = 0.1f;
+constexpr float kProjectorFar = 10.0f;
+
+// Força do feixe na distância da lona (a ~2,9 m). Na lona branca fosca, as partes brancas do slide
+// somam ~0,9 · albedo à luz da sala (ambiente 0,25 mais ~0,5 das lâmpadas): leem bem com a luz acesa,
+// saturando em 1 sem passar disso, e se destacam com ela apagada. Um projetor não projeta preto: as
+// partes escuras do slide só não recebem luz e ficam com a cor que a sala já dá à lona. Levemente
+// quente, perto do branco das lâmpadas, para o slide não puxar para nenhuma cor.
+constexpr glm::vec3 kProjectorLightColor(0.90f, 0.90f, 0.85f);
 
 // Ponto no espaço do objeto levado para o mundo: o enquadramento acompanha o placement.
 glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
@@ -185,6 +204,28 @@ Classroom::Classroom()
     // Mover a tela ou o projetor realinha sem mudar nenhum ângulo à mão.
     const glm::vec3 screenCenter = toWorld(screenPlacement, screen_.canvasCenter());
     projector_.aimAt(toWorld(glm::inverse(projectorPlacement), screenCenter));
+
+    // AB2 · Projeção: o projetor como uma câmera na lente (CG-77). Origem, eixo e "cima" da lente vão
+    // do espaço do projetor para o mundo pelo placement; direções só pela parte 3x3 (sem translação).
+    const glm::vec3 lensPosition = toWorld(projectorPlacement, projector_.lensCenter());
+    const glm::mat3 projectorRotation(projectorPlacement);
+    const glm::vec3 lensDirection = glm::normalize(projectorRotation * projector_.lensDirection());
+    const glm::vec3 lensUp = glm::normalize(projectorRotation * projector_.lensUp());
+    // Throw ratio: a imagem de largura w a uma distância d pede fovX = 2·atan(w/2 / d); o fov vertical
+    // sai da proporção do slide, tan(fovY/2) = tan(fovX/2) / aspecto. Com a lente a ~2,9 m: ~35° e ~27°.
+    const float throwDistance = glm::distance(lensPosition, screenCenter);
+    const float halfImageWidth = kImageFill * screen_.canvasSize().x * 0.5f;
+    const float fovX = 2.0f * std::atan(halfImageWidth / throwDistance);
+    const float fovY = 2.0f * std::atan(std::tan(fovX * 0.5f) / kSlideAspect);
+    // lookAt com up = lensUp: o +X da "câmera" é o +X da sala, a direita de quem olha a tela. Assim u
+    // cresce para a direita e v para cima na lona, e o slide aparece em pé e sem espelhar.
+    const glm::mat4 projectorView = glm::lookAt(lensPosition, lensPosition + lensDirection, lensUp);
+    const glm::mat4 projectorProjection = glm::perspective(fovY, kSlideAspect, kProjectorNear, kProjectorFar);
+    lighting_.projector.viewProjection = projectorProjection * projectorView;
+    lighting_.projector.position = lensPosition;
+    lighting_.projector.color = kProjectorLightColor;
+    lighting_.projector.referenceDistance = throwDistance;
+
     targets_.push_back({"projetor", &projector, toWorld(projectorPlacement, {0.55f, -0.35f, 0.75f}),
                         toWorld(projectorPlacement, {0.0f, -0.22f, 0.0f})});  // tecla 9
 
@@ -222,6 +263,8 @@ Classroom::Classroom()
     // Estado inicial: sala acesa, com a tecla do interruptor já na posição "ligado" e os tubos brilhando.
     // Depois das luminárias e do interruptor, que esta chamada altera.
     setLightOn(true);
+    // Projetor desligado: lente apagada e nenhuma imagem na tela até apertar P.
+    setProjectorOn(false);
 }
 
 void Classroom::update(const Input& input, float deltaTime) {
@@ -245,7 +288,18 @@ void Classroom::update(const Input& input, float deltaTime) {
         }
     }
     fan_.update(deltaTime);
-    // Interações (CG-75, CG-76, CG-77) e animações entram aqui.
+    // Projetor (CG-77): P liga/desliga; ← e → trocam o slide (a imagem troca mesmo desligado).
+    if (input.keyPressed(GLFW_KEY_P)) {
+        setProjectorOn(!projectorOn_);
+    }
+    if (input.keyPressed(GLFW_KEY_RIGHT)) {
+        projector_.nextSlide();
+        lighting_.projector.image = projector_.currentSlide();
+    }
+    if (input.keyPressed(GLFW_KEY_LEFT)) {
+        projector_.previousSlide();
+        lighting_.projector.image = projector_.currentSlide();
+    }
 }
 
 void Classroom::setLightOn(bool on) {
@@ -263,6 +317,14 @@ void Classroom::setLightOn(bool on) {
     // O tubo aceso brilha sozinho (emissive); apagado, volta a ser vidro iluminado pela sala.
     lamp_.setLit(on);
     lighting_.ambient = on ? kAmbientLight : kAmbientLightOff;
+}
+
+void Classroom::setProjectorOn(bool on) {
+    projectorOn_ = on;
+    projector_.setOn(on);  // a lente acende (emissive do vidro)
+    // Desligado, o renderer manda uProjector.enabled = false e o shader nem calcula a projeção.
+    lighting_.projector.enabled = on;
+    lighting_.projector.image = projector_.currentSlide();
 }
 
 bool Classroom::handleInspection(const Input& input, Camera& camera) {
