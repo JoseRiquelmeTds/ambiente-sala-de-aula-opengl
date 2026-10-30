@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 
@@ -11,7 +12,9 @@ namespace objects {
 // Luminária de teto de sobrepor, com 2 tubos T8 de 1,20 m (CG-63). Metros, Y para cima.
 // Pivô no ponto de fixação: a origem é o centro da face encostada no teto e o corpo desce para -Y.
 // Os tubos ficam deitados ao longo de X. Medidas: 1,27 (X) x 0,075 (Y) x 0,25 m (Z).
-// Criar com o contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes.
+// Materiais (CG-74), só cor, sem textura (são superfícies lisas): calha de chapa pintada de branco, refletor de
+// alumínio, vidro leitoso do tubo e soquete de plástico branco.
+// Criar com o contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes e materiais.
 class Lamp {
 public:
     Lamp();
@@ -33,12 +36,20 @@ private:
     Mesh reflector_;  // refletor em "W" e aletas, de alumínio
     Mesh tube_;       // vidro do tubo, usado pelos 2 tubos
     Mesh socket_;     // soquete de plástico, usado pelos 4 soquetes
+
+    // Um material por mesh acima. Todas as luminárias apontam para os mesmos: mudar um membro (o emissive do
+    // vidro, na CG-73) muda as quatro.
+    Material paintedSheet_;
+    Material aluminum_;
+    Material tubeGlass_;
+    Material socketPlastic_;
 };
 
 // Interruptor de parede de uma tecla (CG-63), espelho de 0,08 x 0,12 m. Metros, Y para cima.
 // Pivô no ponto de fixação: a origem é o centro da face encostada na parede; frente para +Z.
 // A tecla bascula em torno de um eixo horizontal (paralelo a X), como uma tecla real.
-// Criar com o contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes.
+// Material (CG-74): espelho e tecla de plástico branco brilhante, sem textura.
+// Criar com o contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes e o material.
 class LightSwitch {
 public:
     LightSwitch();
@@ -58,6 +69,7 @@ public:
 private:
     Mesh plate_;  // espelho
     Mesh key_;    // tecla basculante
+    Material plastic_;  // espelho e tecla (a tecla herda do espelho)
     SceneNode* root_ = nullptr;      // não donos: nós da árvore de quem chamou addTo
     SceneNode* keyJoint_ = nullptr;  // pivô no eixo de basculamento da tecla
     bool on_ = false;

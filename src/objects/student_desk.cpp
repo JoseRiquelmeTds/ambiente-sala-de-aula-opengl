@@ -43,7 +43,8 @@ constexpr float kFootRadius = furniture::kTubeRadius + 0.002f;
 constexpr float kFootHeight = 0.025f;
 
 // textureSize das primitivas: quantos metros uma repetição da textura cobre (tiling, não estica).
-constexpr float kWoodTextureSize = 0.5f;
+// O do tampo é furniture::kBoardTextureSize, o mesmo das placas da cadeira. Tubo e ponteira não
+// têm textura (só cor), mas a UV continua em metros para o caso de ganharem uma.
 constexpr float kMetalTextureSize = 0.2f;
 constexpr float kPlasticTextureSize = 0.1f;
 
@@ -134,21 +135,34 @@ glm::mat4 translated(const glm::vec3& position) {
 
 StudentDesk::StudentDesk()
     : frame_(makeFrame()),
-      top_(primitives::box({kTopWidth, furniture::kBoardThickness, kTopDepth}, kWoodTextureSize)),
-      foot_(primitives::cylinder(kFootRadius, kFootHeight, furniture::kTubeSegments, kPlasticTextureSize)) {}
+      top_(primitives::box({kTopWidth, furniture::kBoardThickness, kTopDepth}, furniture::kBoardTextureSize)),
+      foot_(primitives::cylinder(kFootRadius, kFootHeight, furniture::kTubeSegments, kPlasticTextureSize)),
+      boardTexture_(furniture::kBoardTexturePath),
+      tube_(furniture::tubeMaterial()),
+      board_(furniture::boardMaterial()),
+      // Borracha/plástico preto fosco: reflexo fraco, só para a ponteira não parecer um furo.
+      footPlastic_(materials::plastic(glm::vec3(0.05f))) {
+    // O material só guarda o ponteiro: a textura é membro deste objeto e vive o mesmo tempo.
+    board_.diffuseMap = &boardTexture_;
+    footPlastic_.specular = glm::vec3(0.20f);
+    footPlastic_.shininess = 16.0f;
+}
 
 SceneNode& StudentDesk::addTo(SceneNode& parent, const glm::mat4& placement) const {
     // A raiz é a estrutura: o tampo e as ponteiras são filhos dela, então a model de cada peça é
     // placement · transform e mover a carteira leva tudo junto.
+    // O material da raiz (o tubo) é herdado por quem não tem o seu; tampo e ponteiras sobrescrevem.
     SceneNode& root = parent.addChild(&frame_, placement);
+    root.material = &tube_;
 
     // A box tem o pivô na base: basta subir até a face de baixo do tampo.
-    root.addChild(&top_, translated({0.0f, kTopY, 0.0f}));
+    SceneNode& top = root.addChild(&top_, translated({0.0f, kTopY, 0.0f}));
+    top.material = &board_;
 
     // O mesmo mesh de ponteira nos 4 pés: cada nó só muda a posição.
     for (float x : {-kLegX, kLegX}) {
         for (float z : {-kLegZ, kLegZ}) {
-            root.addChild(&foot_, translated({x, 0.0f, z}));
+            root.addChild(&foot_, translated({x, 0.0f, z})).material = &footPlastic_;
         }
     }
     return root;

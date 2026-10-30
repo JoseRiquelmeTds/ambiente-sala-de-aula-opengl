@@ -93,8 +93,9 @@ e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo
 A carteira (CG-62, `objects::StudentDesk`) tem tampo de MDF de 0,60 × 0,45 m a 0,75 m do chão, estrutura de tubo de
 aço de 22 mm, porta-livros de arame sob o tampo e ponteiras de plástico. Pivô no chão, no centro entre os pés, com a
 frente (+Z) para o lado do aluno. Tubo e espessura do tampo vêm de `objects/furniture_style.hpp`, compartilhado com a
-cadeira. As seis instâncias da montagem compartilham os meshes e usam o material padrão (cinza claro fosco) até a
-CG-74.
+cadeira. As seis instâncias da montagem compartilham os meshes e os materiais (CG-74): tubo de aço com pintura
+grafite, tampo de laminado madeirado claro (`laminado_carteira.png`) e ponteiras de plástico preto. Os materiais do
+tubo e do laminado também ficam em `objects/furniture_style.hpp`, prontos para a cadeira.
 
 O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
 A origem local é a fixação na parede, com frente +Z. `Classroom` o fixa na parede esquerda, voltado para dentro;
@@ -132,13 +133,15 @@ estão separados para os futuros materiais por peça.
 A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubos T8 de 1,20 m, refletor em "W" e aletas;
 a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,
 origem no centro da face encostada na parede e frente +Z; `objects::LightSwitch::setOn(bool)` só inclina a tecla, sem
-reconstruir geometria. A tecla `L` e o acender da luz ficam para a CG-73. Até os materiais deles (CG-74), os dois
-usam o material padrão (cinza claro fosco); as luminárias encostam no teto e o interruptor fica na parede direita.
+reconstruir geometria. A tecla `L` e o acender da luz ficam para a CG-73. Materiais (CG-74), só cor, sem textura:
+calha de chapa pintada de branco, refletor de alumínio, vidro leitoso do tubo e soquete de plástico; o interruptor é
+de plástico branco brilhante. As luminárias encostam no teto e o interruptor fica na parede direita.
 
 A mesa do professor (CG-64) tem tampo de 1,20 × 0,60 m a 0,75 m do chão, laterais e painel frontal de MDF e um
 gaveteiro de 3 gavetas fixas com puxadores. O pivô fica no chão, no centro da mesa; a frente (+Z, painel frontal) é o
-lado da turma e as gavetas abrem para o professor (-Z). A mesa fica na região frontal da sala. Até os materiais dela
-(CG-74), usa o material padrão (cinza claro fosco).
+lado da turma e as gavetas abrem para o professor (-Z). A mesa fica na região frontal da sala. Materiais (CG-74):
+madeira escura com veio (`madeira_mesa_professor.png`) no tampo, nos painéis e nas gavetas, puxadores de metal
+escovado e sapatas de plástico preto.
 A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede frontal.
 A origem local é o centro da face da caixa encostada na parede, com frente +Z.
 `objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a

@@ -3,8 +3,10 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
+#include "gfx/texture.hpp"
 
 namespace objects {
 
@@ -12,7 +14,9 @@ namespace objects {
 // frontal e gaveteiro de 3 gavetas (geometria fixa, sem interação).
 // Metros, Y para cima. Pivô no chão, no centro da mesa vista de cima. Frente (+Z) = lado da turma, com o painel
 // frontal; o professor senta do lado -Z, para onde as gavetas abrem.
-// Criar com o contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes.
+// Materiais (CG-74): madeira escura com veio em todo o MDF (tampo, painéis e frentes das gavetas), puxadores de
+// metal escovado e sapatas de plástico preto.
+// Criar com o contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes, materiais e textura.
 class TeacherDesk {
 public:
     TeacherDesk();
@@ -26,12 +30,18 @@ public:
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement) const;
 
 private:
-    // Um mesh por material previsto para a CG-72.
     Mesh top_;          // tampo: laminado madeirado
     Mesh body_;         // painéis laterais, painel frontal e caixa do gaveteiro: MDF
     Mesh drawerFront_;  // frente de gaveta, usada pelas 3 gavetas
     Mesh handle_;       // puxador metálico, um por gaveta
     Mesh foot_;         // sapata de plástico sob os painéis, usada 6 vezes
+
+    // A textura vem antes do material que aponta para ela (os membros são construídos nesta ordem), e os dois
+    // existem enquanto a árvore apontar para eles.
+    Texture woodTexture_;
+    Material wood_;
+    Material handleMetal_;
+    Material footPlastic_;
 };
 
 }  // namespace objects
