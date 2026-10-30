@@ -245,7 +245,7 @@ branco (a cor vem da imagem). O tiling vem do `textureSize` das primitivas (UV e
 - **Veio na direção do comprimento:** as imagens têm o veio na horizontal (eixo u), e no `box()` u segue X nas faces
   de cima e da frente, que é o comprimento do tampo, do painel frontal e das gavetas.
 - **Nada estourando:** os brancos (calha, soquete, vidro, interruptor) ficam entre 0,82 e 0,90, não 1,0: somando
-  ambiente, janela e luminárias, um branco puro passaria de 1 nas faces de frente para a luz, e o OpenGL cortaria em
+  ambiente, preenchimento e luminárias, um branco puro passaria de 1 nas faces de frente para a luz, e o OpenGL cortaria em
   branco chapado, sem volume.
 
 ### Herança pela árvore
