@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <cstddef>
-#include <initializer_list>
+#include <iterator>
 
 #include "core/camera.hpp"
 #include "core/input.hpp"
@@ -33,6 +33,8 @@ constexpr glm::vec3 kProjectorMount(0.0f, kCeilingHeight, -0.5f);
 constexpr float kStudentColumns[] = {-1.25f, 1.25f};
 constexpr float kStudentRows[] = {-0.85f, 0.65f, 2.15f};
 constexpr float kChairOffsetZ = 0.55f;
+constexpr float kLampColumns[] = {-1.6f, 1.6f};
+constexpr float kLampRows[] = {-1.5f, 1.5f};
 
 // Ponto no espaço do objeto levado para o mundo: o enquadramento acompanha o placement.
 glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
@@ -52,11 +54,13 @@ Classroom::Classroom()
     // No modelo real, +Z é o lado do ALUNO (porta-livros aberto), não a direção do olhar.
     // Sem giro, o aluno fica atrás da carteira em +Z e olha para a tela em -Z.
     // Cada instância é filha direta da raiz: a inspeção da primeira esconde as outras cinco.
-    for (float z : kStudentRows) {
-        for (float x : kStudentColumns) {
+    for (std::size_t i = 0; i < std::size(kStudentRows); ++i) {
+        for (std::size_t j = 0; j < std::size(kStudentColumns); ++j) {
+            const float z = kStudentRows[i];
+            const float x = kStudentColumns[j];
             const glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z));
             const SceneNode& desk = studentDesk_.addTo(root_, placement);
-            if (targets_.empty()) {
+            if (i == 0 && j == 0) {
                 targets_.push_back({"carteira", &desk, toWorld(placement, {0.7f, 1.1f, 1.1f}),
                                     toWorld(placement, {0.0f, 0.5f, 0.0f})});  // tecla 2
             }
@@ -92,11 +96,13 @@ Classroom::Classroom()
     targets_.push_back({"ventilador", &fan, fanEye, fanCenter});  // tecla 4
 
     // Face superior em Y = 3: o modelo desce em -Y. Quatro instâncias, longe do projetor central.
-    for (float z : {-1.5f, 1.5f}) {
-        for (float x : {-1.6f, 1.6f}) {
+    for (std::size_t i = 0; i < std::size(kLampRows); ++i) {
+        for (std::size_t j = 0; j < std::size(kLampColumns); ++j) {
+            const float z = kLampRows[i];
+            const float x = kLampColumns[j];
             const glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, kCeilingHeight, z));
             const SceneNode& lamp = lamp_.addTo(root_, placement);
-            if (x < 0.0f && z < 0.0f) {
+            if (i == 0 && j == 0) {
                 targets_.push_back({"lâmpada", &lamp, toWorld(placement, {0.5f, -0.8f, 1.1f}),
                                     toWorld(placement, {0.0f, -0.04f, 0.0f})});  // tecla 5, de baixo
             }
@@ -146,12 +152,14 @@ Classroom::Classroom()
     // Cadeiras (CG-60): Ry(180°) leva a frente local +Z para -Z, olhando para o quadro.
     // O recuo de 0,55 m deixa 0,125 m entre a frente do assento e a borda do tampo.
     // Um só alvo representativo, depois dos nove anteriores; os outros cinco são irmãos independentes.
-    for (float z : kStudentRows) {
-        for (float x : kStudentColumns) {
+    for (std::size_t i = 0; i < std::size(kStudentRows); ++i) {
+        for (std::size_t j = 0; j < std::size(kStudentColumns); ++j) {
+            const float z = kStudentRows[i];
+            const float x = kStudentColumns[j];
             glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z + kChairOffsetZ));
             placement = glm::rotate(placement, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             const SceneNode& chair = chair_.addTo(root_, placement);
-            if (x == kStudentColumns[0] && z == kStudentRows[0]) {
+            if (i == 0 && j == 0) {
                 targets_.push_back({"cadeira", &chair, toWorld(placement, {0.72f, 0.80f, 0.98f}),
                                     toWorld(placement, {0.0f, 0.42f, -0.03f})});  // décimo alvo, [ e ]
             }
