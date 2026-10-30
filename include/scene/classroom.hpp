@@ -9,7 +9,6 @@
 #include "gfx/light.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
-#include "gfx/texture.hpp"
 #include "objects/board.hpp"
 #include "objects/chair.hpp"
 #include "objects/student_desk.hpp"
@@ -65,8 +64,6 @@ public:
     const SceneNode& root() const { return root_; }
     // Luzes da sala (CG-71): uma pontual por luminária, a janela e a luz ambiente.
     const Lighting& lighting() const { return lighting_; }
-    // Textura da cena inteira, até existir material por peça (CG-72).
-    const Texture& texture() const { return testTexture_; }
 
 private:
     struct InspectionTarget {
@@ -76,13 +73,11 @@ private:
         glm::vec3 center;  // para onde olha
     };
 
-    // Membros na ordem de construção: meshes e textura antes da árvore, que aponta para eles
-    // e é destruída primeiro.
+    // Membros na ordem de construção: meshes antes da árvore, que aponta para eles e é
+    // destruída primeiro.
     Mesh baseMesh_;
     Mesh rodMesh_;
     Mesh armMesh_;
-    // Vermelho cresce com u (para a direita) e verde com v (para cima). Verde embaixo = imagem invertida.
-    Texture testTexture_;
     objects::StudentDesk studentDesk_;
     objects::Fan fan_;
     objects::Lamp lamp_;

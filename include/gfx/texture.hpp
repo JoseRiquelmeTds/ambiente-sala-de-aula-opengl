@@ -29,11 +29,12 @@
 //     reduzidas (mipmaps) e mistura os dois níveis mais próximos. Sem mipmap, um piso visto de
 //     longe "cintila", porque cada pixel pega um texel quase aleatório da imagem inteira.
 //
-//  Uso:
+//  Uso: na cena, a textura entra por um Material (include/gfx/material.hpp), que faz o bind:
 //      Texture madeira("assets/textures/madeira.png");
-//      shader.use();
-//      madeira.bind(0);                  // unidade de textura 0
-//      shader.setInt("uTexture", 0);     // o sampler2D lê da unidade 0
+//      material.diffuseMap = &madeira;
+//  O que Material::apply faz por baixo:
+//      madeira.bind(0);                                 // unidade de textura 0
+//      shader.setInt("uMaterial.diffuseMap", 0);        // o sampler2D lê da unidade 0
 //      mesh.draw();
 class Texture {
 public:

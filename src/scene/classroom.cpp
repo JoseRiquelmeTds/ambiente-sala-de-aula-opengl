@@ -70,8 +70,7 @@ glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
 Classroom::Classroom()
     : baseMesh_(primitives::cylinder(0.25f, 0.05f)),
       rodMesh_(primitives::cylinder(0.025f, 1.0f, 16)),
-      armMesh_(primitives::box({0.5f, 0.04f, 0.04f})),
-      testTexture_("assets/textures/uv_teste.png") {
+      armMesh_(primitives::box({0.5f, 0.04f, 0.04f})) {
     room_.addTo(root_, glm::mat4(1.0f));
 
     lighting_.ambient = kAmbientLight;
