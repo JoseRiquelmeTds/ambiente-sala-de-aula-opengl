@@ -31,6 +31,11 @@ constexpr float kTubeZ = 0.060f;   // tubos em z = -kTubeZ e +kTubeZ
 // (N·L < 0) e escuras. Logo abaixo, tubos e refletor aparecem acesos.
 constexpr float kLightGap = 0.015f;
 
+// Brilho próprio do vidro aceso (CG-73), somado sem depender de luz nenhuma: com o ambiente, passa
+// de 1 e o tubo aparece branco, mesmo visto de lado ou de cima, onde nenhuma luz da cena o atinge.
+// Levemente azulado, como o fluorescente "luz do dia" das salas de aula.
+constexpr glm::vec3 kTubeLitEmissive(0.80f, 0.82f, 0.86f);
+
 // Soquete encostado na tampa lateral da calha, segurando a ponta do tubo.
 constexpr glm::vec3 kSocketSize(0.030f, 0.034f, 0.032f);
 constexpr float kSocketBottom = kTubeY - kSocketSize.y / 2.0f;  // centrado na altura do tubo
@@ -211,6 +216,10 @@ Lamp::Lamp()
 
 glm::vec3 Lamp::lightOrigin() {
     return {0.0f, -(kBodyHeight + kLightGap), 0.0f};
+}
+
+void Lamp::setLit(bool lit) {
+    tubeGlass_.emissive = lit ? kTubeLitEmissive : glm::vec3(0.0f);
 }
 
 SceneNode& Lamp::addTo(SceneNode& parent, const glm::mat4& placement) const {

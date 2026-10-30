@@ -30,6 +30,11 @@ public:
     // abaixo dos tubos. Quem posiciona (scene/classroom) leva o ponto para o mundo.
     static glm::vec3 lightOrigin();
 
+    // Acende ou apaga o VIDRO dos tubos (CG-73): só troca o emissive do material do tubo. Todas as
+    // luminárias apontam para o mesmo material, então as quatro mudam juntas. A luz que ilumina a sala
+    // é a PointLight de cada luminária, ligada e desligada pela scene/classroom junto com esta chamada.
+    void setLit(bool lit);
+
 private:
     // Um mesh por material da CG-72. O tubo fica separado porque é a parte que acende (CG-71/73).
     Mesh body_;       // calha em chapa de aço pintada
@@ -61,8 +66,8 @@ public:
     // Chamadas seguintes devolvem a raiz já anexada, sem duplicá-la.
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement);
 
-    // Só inclina a tecla (metade de cima afundada = ligado); acender a luz fica para a CG-73.
-    // Pode ser chamada antes de addTo: a posição é aplicada quando a tecla for criada.
+    // Só inclina a tecla (metade de cima afundada = ligado); quem acende a luz é a scene/classroom
+    // (tecla L, CG-73). Pode ser chamada antes de addTo: a posição é aplicada quando a tecla for criada.
     void setOn(bool on);
     bool isOn() const { return on_; }
 

@@ -49,6 +49,7 @@ public:
     Classroom& operator=(const Classroom&) = delete;
 
     // Teclas das interações e animações. Uma vez por frame, com a janela em foco.
+    // L: liga/desliga as luzes do teto (CG-73).
     void update(const Input& input, float deltaTime);
 
     // Tecla 1 mostra a sala inteira; 2 a 9 e 0 preservam os nove primeiros alvos.
@@ -67,6 +68,11 @@ public:
     const Lighting& lighting() const { return lighting_; }
 
 private:
+    // Liga ou desliga as luzes do teto (CG-73): a tecla do interruptor, as 4 luzes pontuais, o
+    // brilho dos tubos e a parte da luz ambiente que vem das lâmpadas. Tudo de uma vez, sem animação,
+    // como um fluorescente real.
+    void setLightOn(bool on);
+
     struct InspectionTarget {
         std::string name;
         const SceneNode* node;  // filho direto de root_
@@ -99,6 +105,7 @@ private:
     Lighting lighting_;
     std::vector<InspectionTarget> targets_;
     int currentInspection_ = kWholeScene;
+    bool lightOn_ = true;  // luzes do teto (CG-73); a sala começa acesa
 };
 
 }  // namespace scene
