@@ -32,7 +32,7 @@ struct PointLight {
     bool enabled = true;  // luz desligada não é enviada ao shader (interruptor, CG-73)
 };
 
-// Luz vinda de muito longe (sol entrando pela janela): todos os raios paralelos, sem atenuação.
+// Luz vinda de muito longe (a claridade do dia): todos os raios paralelos, sem atenuação.
 struct DirectionalLight {
     glm::vec3 direction{0.0f, -1.0f, 0.0f};  // para onde a luz VAI (do céu para a sala); não precisa ser unitária
     glm::vec3 color{0.0f};                   // preto = desligada
@@ -44,7 +44,7 @@ struct Lighting {
     // Garante que nenhuma face fique totalmente preta, mesmo de costas para todas as luzes.
     glm::vec3 ambient{0.0f};
 
-    DirectionalLight window;  // preenchimento fraco da janela
+    DirectionalLight fill;  // preenchimento fraco (claridade do dia), não sai de nenhum objeto da cena
 
     // No máximo kMaxPointLights: o renderer ignora as excedentes (com aviso no console).
     std::vector<PointLight> pointLights;

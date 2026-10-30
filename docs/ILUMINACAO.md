@@ -9,7 +9,7 @@ cada coisa fica no código: [§ 6](#6-onde-está-no-código). Para aplicar mater
 
 1. [Modelo de Blinn-Phong](#1-modelo-de-blinn-phong)
 2. [Luzes pontuais e atenuação](#2-luzes-pontuais-e-atenuação)
-3. [Luz ambiente e luz da janela](#3-luz-ambiente-e-luz-da-janela)
+3. [Luz ambiente e luz de preenchimento](#3-luz-ambiente-e-luz-de-preenchimento)
 4. [Matriz das normais](#4-matriz-das-normais)
 5. [Valores escolhidos](#5-valores-escolhidos)
 6. [Onde está no código](#6-onde-está-no-código)
@@ -61,6 +61,14 @@ espelhado na superfície. Blinn troca R·V por N·H:
 
 Para o reflexo ter o mesmo tamanho, o expoente do Blinn costuma ser de 2 a 4 vezes o do Phong.
 
+**Divisões protegidas.** Normalizar é dividir o vetor pelo próprio comprimento, então um vetor nulo daria divisão por
+zero (resultado `NaN`, pixel com cor indefinida). Dois casos são tratados com um epsilon (`kEpsilon = 1e-4`):
+
+- **Distância até a luz pontual:** `d = max(length(toLight), kEpsilon)` antes de `toLight / d`, para o caso de um
+  fragmento coincidir com a posição da luz.
+- **Half-vector:** se `L + V` for nulo (luz exatamente atrás da superfície e câmera de frente, em sentidos opostos),
+  não há reflexo para a câmera: o especular fica 0 em vez de normalizar o vetor nulo.
+
 ## 2. Luzes pontuais e atenuação
 
 Cada uma das quatro luminárias de teto tem uma luz pontual: sai de um ponto para todos os lados, então L muda em cada
@@ -96,15 +104,15 @@ lâmpada é (0,55; 0,53; 0,50), pouco mais de metade do branco; com 1,0 o piso e
 Uma luz com `enabled = false` não é enviada ao shader: o renderer monta o array só com as ligadas e envia a quantidade
 em `uPointLightCount`. É o que a CG-73 (ligar a luz) vai usar.
 
-## 3. Luz ambiente e luz da janela
+## 3. Luz ambiente e luz de preenchimento
 
 - **Ambiente (0,25; 0,25; 0,26):** garante que nenhuma face fique preta. Uma face de costas para todas as luzes
   mostra 25% da própria cor. Mais que isso, a sala fica "lavada" (todas as faces com a mesma claridade, sem volume).
-- **Janela (direcional):** luz de muito longe (o sol), com todos os raios paralelos: L é a mesma em toda a cena e não
-  há atenuação. As janelas ficam na parede esquerda (-X), à esquerda de quem olha para o quadro, como se recomenda em
-  sala de aula (a mão de quem escreve com a direita não faz sombra no caderno). A luz viaja para +X e desce
-  (direção (1; -0,6; 0,15)), fraca e levemente azulada (0,16; 0,17; 0,19). Ela só **preenche**: dá volume às faces
-  voltadas para a esquerda, que as lâmpadas iluminam de lado.
+- **Preenchimento (direcional):** representa a claridade do dia, uma luz de muito longe com todos os raios
+  paralelos: L é a mesma em toda a cena e não há atenuação. A sala não tem janela modelada, então essa luz não sai de
+  nenhum objeto da cena; ela só vem do lado esquerdo (-X) de quem olha para o quadro, onde as salas costumam ter
+  janelas. A luz viaja para +X e desce (direção (1; -0,6; 0,15)), fraca e levemente azulada (0,16; 0,17; 0,19). Ela só
+  **preenche**: dá volume às faces voltadas para a esquerda, que as lâmpadas iluminam de lado.
 
 ## 4. Matriz das normais
 
@@ -149,7 +157,7 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Cor da lâmpada | (0,55; 0,53; 0,50) | `kLampLightColor` |
 | Atenuação | kc = 1; kl = 0,14; kq = 0,07 | `kLampConstant`, `kLampLinear`, `kLampQuadratic` |
 | Ambiente | (0,25; 0,25; 0,26) | `kAmbientLight` |
-| Janela | direção (1; -0,6; 0,15), cor (0,16; 0,17; 0,19) | `kWindowDirection`, `kWindowColor` |
+| Preenchimento | direção (1; -0,6; 0,15), cor (0,16; 0,17; 0,19) | `kFillDirection`, `kFillColor` |
 | Especular / brilho | por peça, no material ([§ 7](#7-materiais)) | `gfx/material.cpp` |
 
 ## 6. Onde está no código
@@ -157,9 +165,9 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Parte | Arquivo |
 | --- | --- |
 | Structs `PointLight`, `DirectionalLight`, `Lighting` | `include/gfx/light.hpp` |
-| Luzes da sala (posição, cor, atenuação, ambiente, janela) | `src/scene/classroom.cpp` (`Classroom::lighting()`) |
+| Luzes da sala (posição, cor, atenuação, ambiente, preenchimento) | `src/scene/classroom.cpp` (`Classroom::lighting()`) |
 | Ponto da luz na luminária | `Lamp::lightOrigin()` em `src/objects/lamp.cpp` |
-| Envio dos uniforms (`uViewPos`, `uAmbient`, `uWindowLight`, `uPointLights[]`, `uPointLightCount`) | `src/gfx/renderer.cpp` |
+| Envio dos uniforms (`uViewPos`, `uAmbient`, `uFillLight`, `uPointLights[]`, `uPointLightCount`) | `src/gfx/renderer.cpp` |
 | Normal matrix (`uNormalMatrix`) | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
 | Normal para o mundo | `shaders/basic.vert` |
 | Blinn-Phong, atenuação, modos de depuração | `shaders/basic.frag` (`blinnPhong`, `shade`, `albedo`) |
