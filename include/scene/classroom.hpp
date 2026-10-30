@@ -50,6 +50,7 @@ public:
 
     // Teclas das interações e animações. Uma vez por frame, com a janela em foco.
     // L: liga/desliga as luzes do teto (CG-73).
+    // T: abre/recolhe a tela retrátil, animada com deltaTime (CG-75).
     void update(const Input& input, float deltaTime);
 
     // Tecla 1 mostra a sala inteira; 2 a 9 e 0 preservam os nove primeiros alvos.
