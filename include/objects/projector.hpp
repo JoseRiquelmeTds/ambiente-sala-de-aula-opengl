@@ -20,7 +20,7 @@ namespace objects {
 //      raiz ─┬─ placa do teto e haste (fixas)
 //            └─ cabeça: T(ponta da haste) · Rx(inclinação), pivô da inclinação
 //                 ├─ suporte e corpo (0,30 x 0,10 x 0,25 m)
-//                 └─ lente: peça e mesh próprios, para a CG-77 dar brilho só a ela
+//                 └─ lente: peça, mesh e material próprios (vidro escuro), que acende ligada (CG-77)
 //
 //  Inclinação positiva abaixa a frente (regra da mão direita em +X). aimAt calcula a
 //  inclinação para o eixo da lente passar por um ponto. O giro em Y (para onde o projetor
@@ -54,6 +54,13 @@ public:
     glm::vec3 lensCenter() const;
     glm::vec3 lensDirection() const;
 
+    // Liga ou desliga o projetor (CG-77). Aqui só a lente muda: ligada, ela brilha (emissive do
+    // vidro). A luz que leva o slide até a tela é a Lighting::projector, que a scene/classroom liga
+    // junto com esta chamada. Pode ser chamado antes de addTo.
+    void setOn(bool on);
+    void toggle();
+    bool isOn() const { return on_; }
+
 private:
     glm::mat4 headTransform() const;
 
@@ -68,13 +75,14 @@ private:
     Texture plasticTexture_;
     Material metal_;      // placa do teto e haste
     Material plastic_;    // suporte e corpo
-    Material lensGlass_;  // lente; a CG-77 liga o emissive quando o projetor acende
+    Material lensGlass_;  // lente; o emissive acende com o projetor ligado (setOn, CG-77)
 
     // Não donos: nós criados em addTo, que vivem na árvore do pai.
     SceneNode* root_ = nullptr;
     SceneNode* head_ = nullptr;
     SceneNode* lens_ = nullptr;  // aponta para lensGlass_
     float tiltRadians_ = 0.0f;
+    bool on_ = false;
 };
 
 }  // namespace objects

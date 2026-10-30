@@ -26,6 +26,11 @@ constexpr float kLensLength = 0.03f;
 // Base da lente: centro da face da frente do corpo, na meia altura dele.
 constexpr glm::vec3 kLensBase(0.0f, -(kBracketSize.y + kBodySize.y * 0.5f), kBodySize.z * 0.5f);
 
+// Brilho próprio da lente com o projetor ligado (CG-77), somado sem depender de luz nenhuma: o vidro
+// escuro aparece aceso de qualquer ângulo, como a lâmpada do projetor vista pela lente. Branco frio,
+// puxando para o azul, como a lâmpada de projetor.
+constexpr glm::vec3 kLensLitEmissive(0.85f, 0.90f, 1.0f);
+
 // Plástico do gabinete repete a textura a cada 25 cm; a lente estica a imagem.
 constexpr float kMaterialTextureSize = 0.25f;
 
@@ -57,7 +62,7 @@ Projector::Projector()
     plastic_.shininess = 24.0f;
     lensGlass_.specular = glm::vec3(0.90f);
     lensGlass_.shininess = 128.0f;
-    lensGlass_.emissive = glm::vec3(0.0f);  // apagado; a CG-77 acende
+    lensGlass_.emissive = glm::vec3(0.0f);  // começa apagado; setOn acende (CG-77)
 }
 
 SceneNode& Projector::addTo(SceneNode& parent, const glm::mat4& placement) {
@@ -114,6 +119,15 @@ glm::vec3 Projector::lensCenter() const {
 
 glm::vec3 Projector::lensDirection() const {
     return glm::normalize(glm::vec3(headTransform() * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));
+}
+
+void Projector::setOn(bool on) {
+    on_ = on;
+    lensGlass_.emissive = on ? kLensLitEmissive : glm::vec3(0.0f);
+}
+
+void Projector::toggle() {
+    setOn(!on_);
 }
 
 glm::mat4 Projector::headTransform() const {
