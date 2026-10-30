@@ -80,10 +80,12 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
 | `1` a `9`, `0` | Inspeção: cena completa / carteira / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
 | `[` / `]` | Alvo anterior / próximo, em ciclo pelos onze alvos: cadeira após a lixeira e quadro ao final |
+| `L` | Liga / desliga as luzes do teto, como o interruptor da parede (a sala começa acesa) |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`) funciona mesmo assim.
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`) e a luz (`L`)
+funcionam mesmo assim.
 As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
 Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona o quadro. O ciclo retorna do último alvo ao primeiro
 e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
@@ -133,7 +135,9 @@ estão separados para os futuros materiais por peça.
 A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubos T8 de 1,20 m, refletor em "W" e aletas;
 a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,
 origem no centro da face encostada na parede e frente +Z; `objects::LightSwitch::setOn(bool)` só inclina a tecla, sem
-reconstruir geometria. A tecla `L` e o acender da luz ficam para a CG-73. Materiais (CG-74), só cor, sem textura:
+reconstruir geometria. A tecla `L` (CG-73) apaga e acende as quatro luminárias: a tecla do interruptor bascula, as luzes
+pontuais desligam, os tubos param de brilhar e a luz ambiente cai, mas a janela continua iluminando a sala
+([docs/ILUMINACAO.md § 9](docs/ILUMINACAO.md#9-interação-ligar-a-luz)). Materiais (CG-74), só cor, sem textura:
 calha de chapa pintada de branco, refletor de alumínio, vidro leitoso do tubo e soquete de plástico; o interruptor é
 de plástico branco brilhante. As luminárias encostam no teto e o interruptor fica na parede direita.
 

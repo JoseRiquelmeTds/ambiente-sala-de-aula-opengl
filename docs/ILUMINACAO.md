@@ -15,6 +15,7 @@ cada coisa fica no código: [§ 6](#6-onde-está-no-código). Para aplicar mater
 6. [Onde está no código](#6-onde-está-no-código)
 7. [Materiais](#7-materiais)
 8. [Como aplicar material no seu objeto](#8-como-aplicar-material-no-seu-objeto)
+9. [Interação: ligar a luz](#9-interação-ligar-a-luz)
 
 ---
 
@@ -47,8 +48,8 @@ o tamanho do reflexo e `emissiva` a luz própria da peça. Os quatro vêm do mat
   refletida vai direto para o olho. O expoente estreita o reflexo: 8 dá uma mancha larga (plástico fosco), 128 um
   ponto pequeno e forte (metal polido). Se `N·L ≤ 0`, o especular é zerado, para o reflexo não aparecer no lado da
   face que não recebe luz.
-- **Emissiva:** luz que a própria peça emite, somada sem depender de luz nenhuma. Zero em quase tudo; é o que fará o
-  tubo da lâmpada acesa parecer aceso (CG-73).
+- **Emissiva:** luz que a própria peça emite, somada sem depender de luz nenhuma. Zero em quase tudo; é o que faz o
+  tubo da lâmpada acesa parecer aceso (CG-73, [§ 9](#9-interação-ligar-a-luz)).
 
 **Por que Blinn-Phong e não Phong.** O Phong original usa `(R·V)^brilho`, com `R = reflect(-L, N)`, o raio de luz
 espelhado na superfície. Blinn troca R·V por N·H:
@@ -94,7 +95,7 @@ atravessar a sala. As quatro luzes **somam**: o centro do piso recebe ~0,41 de c
 lâmpada é (0,55; 0,53; 0,50), pouco mais de metade do branco; com 1,0 o piso e as paredes estouravam para branco.
 
 Uma luz com `enabled = false` não é enviada ao shader: o renderer monta o array só com as ligadas e envia a quantidade
-em `uPointLightCount`. É o que a CG-73 (ligar a luz) vai usar.
+em `uPointLightCount`. É o que a tecla `L` (CG-73) usa para apagar as lâmpadas ([§ 9](#9-interação-ligar-a-luz)).
 
 ## 3. Luz ambiente e luz da janela
 
@@ -148,7 +149,8 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Posição | X = ±1,6; Y = 2,91; Z = ±1,5 m (1,5 cm abaixo da calha) | `Lamp::lightOrigin()` + placement |
 | Cor da lâmpada | (0,55; 0,53; 0,50) | `kLampLightColor` |
 | Atenuação | kc = 1; kl = 0,14; kq = 0,07 | `kLampConstant`, `kLampLinear`, `kLampQuadratic` |
-| Ambiente | (0,25; 0,25; 0,26) | `kAmbientLight` |
+| Ambiente | (0,25; 0,25; 0,26); com a luz apagada, (0,20; 0,21; 0,23) | `kAmbientLight`, `kAmbientLightOff` |
+| Brilho do tubo aceso | emissiva (0,80; 0,82; 0,86) | `kTubeLitEmissive` (`objects/lamp.cpp`) |
 | Janela | direção (1; -0,6; 0,15), cor (0,16; 0,17; 0,19) | `kWindowDirection`, `kWindowColor` |
 | Especular / brilho | por peça, no material ([§ 7](#7-materiais)) | `gfx/material.cpp` |
 
@@ -163,6 +165,7 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Normal matrix (`uNormalMatrix`) | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
 | Normal para o mundo | `shaders/basic.vert` |
 | Blinn-Phong, atenuação, modos de depuração | `shaders/basic.frag` (`blinnPhong`, `shade`, `albedo`) |
+| Ligar/desligar a luz (tecla `L`) | `src/scene/classroom.cpp` (`Classroom::update`, `Classroom::setLightOn`), `Lamp::setLit` |
 | Struct `Material`, presets e envio (`uMaterial.*`) | `include/gfx/material.hpp`, `src/gfx/material.cpp` |
 | Herança do material pela árvore | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
 | Material padrão (`materials::neutral()`) | `src/gfx/renderer.cpp` (`kDefaultMaterial`) |
@@ -305,3 +308,33 @@ SceneNode& TrashCan::addTo(SceneNode& parent, const glm::mat4& placement) const 
   `objects/furniture_style.hpp`) e cada objeto guarda a sua cópia. Mudar a função muda os dois.
 - **Conferir:** `kDebugMode = 3` em `src/gfx/renderer.cpp` mostra a cor do material sem luz; volte para 0.
 - Textura nova vai para `assets/textures/` com a linha na tabela de licenças, no mesmo commit.
+
+## 9. Interação: ligar a luz
+
+A tecla `L` (CG-73) apaga e acende as quatro luminárias, como o interruptor da parede. A sala começa acesa. A troca
+é instantânea, como num fluorescente real, e é feita por `Classroom::setLightOn(bool)`, chamada uma vez no
+construtor (estado inicial) e a cada vez que `L` é pressionada. `Input::keyPressed` só vale no frame em que a tecla
+desce: segurar `L` não fica piscando a luz.
+
+O que muda em cada chamada:
+
+| O quê | Ligada | Apagada | Efeito no shader |
+| --- | --- | --- | --- |
+| `PointLight::enabled` das 4 luzes | `true` | `false` | O renderer só envia as ligadas: `uPointLightCount` vai de 4 a 0 e o laço das luzes pontuais não roda |
+| `emissive` do vidro do tubo (`Lamp::setLit`) | (0,80; 0,82; 0,86) | 0 | `uMaterial.emissive` do tubo: aceso, ele aparece branco mesmo visto de lado ou de cima |
+| `Lighting::ambient` | (0,25; 0,25; 0,26) | (0,20; 0,21; 0,23) | `uAmbient` |
+| Tecla do interruptor (`LightSwitch::setOn`) | metade de cima afundada | metade de baixo afundada | `uModel` da tecla (rotação de ±7° em X) |
+
+- **Só uniforms mudam, não a geometria.** Ligar a luz não move nem deforma nada: a cena é a mesma, o que muda é a
+  quantidade de luz que entra na equação de Blinn-Phong. A única transformação é a da tecla, uma rotação da
+  articulação em torno do eixo do basculamento (`T(pivô) · R(±7°)`), como uma tecla real.
+- **Os tubos acendem juntos** porque as quatro luminárias apontam para o **mesmo** `Material` do vidro (membro da
+  `Lamp`): mudar o `emissive` uma vez muda as quatro. O mesmo vale para a luz de cada uma, que é da `Classroom`.
+- **A sala não fica preta.** É uma sala de dia: a janela continua acesa, e a luz ambiente não vai a zero. Parte
+  do ambiente é a luz das lâmpadas rebatida nas paredes; apagadas, sobra só o que a janela rebate. Por isso o
+  ambiente cai para cerca de 80% e puxa para o azul do dia, em vez de sumir. Na vista inicial, a claridade média da
+  imagem cai de ~140 para ~45 (de 255): bem mais escura, mas sem nenhuma face preta, e as faces voltadas para a janela
+  continuam mais claras que as outras.
+- **Por que o tubo precisa de emissiva:** a luz pontual fica abaixo dos tubos, então ela ilumina a parte de baixo do
+  vidro, mas o modelo não tem nada que faça uma superfície parecer uma fonte de luz. A emissiva soma uma cor fixa,
+  independente de luzes e normais: o tubo aparece aceso de qualquer ângulo. Apagado, ele volta a ser só vidro.
