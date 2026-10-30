@@ -154,7 +154,7 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce | `main.cpp` | CG-55 | em uso |
 | `1`, `2`–`9`, `0` | Inspeção: sala inteira / os nove primeiros alvos, preservados. `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor, `7` = mesa do professor, `8` = tela retrátil, `9` = projetor, `0` = lixeira | `scene/classroom` | CG-55, CG-87, CG-62, CG-59, CG-63, CG-64, CG-66, CG-65, CG-67 | em uso |
 | `[` / `]` | Inspeção: alvo anterior / próximo, em ciclo por todos os alvos (hoje onze; cadeira após a lixeira e quadro ao final), sem limite de teclas numéricas | `scene/classroom` | CG-60, CG-61 | em uso |
-| `T` | Tela retrátil: abre / recolhe | `scene/classroom` | CG-75 | reservada |
+| `T` | Tela retrátil: abre / recolhe (a tela começa recolhida) | `scene/classroom` | CG-75 | em uso |
 | `V` | Ventilador: liga / desliga | `scene/classroom` | CG-76 | reservada |
 | `P` | Projetor: liga / desliga | `scene/classroom` | CG-77 | reservada |
 | `←` / `→` | Slide anterior / próximo | `scene/classroom` | CG-77 (opcional) | reservada |

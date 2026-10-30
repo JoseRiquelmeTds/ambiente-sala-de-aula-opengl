@@ -350,6 +350,14 @@ alinhamento é calculado, mover a tela ou o projetor não exige ajustar ângulo 
 `lensDirection()` dão a origem e a direção da projeção para a CG-77. Com o projetor inclinado e a tela vertical, a
 imagem real seria um trapézio (keystone): a CG-77 pode desenhar o slide direto na lona.
 
+A tela anima a abertura (CG-75) mudando só a `transform` da articulação da lona, `T(fenda) · S(1, s, 1)` com o
+pivô no topo, então a lona desce sem descolar da caixa; a barra inferior acompanha por translação. `toggle()` inverte
+o sentido e `update(deltaTime)` avança um progresso linear no tempo (curso inteiro em 2,5 s, independente do FPS);
+s = smoothstep(progresso), limitado a `kMinOpenAmount` (0, recolhida) e `kMaxOpenAmount` (1, aberta). Inverter no
+meio do curso é contínuo, porque só o sentido do progresso muda. Em s ≈ 0 a lona fica com `visible = false` (escala
+zero deixaria a normal matrix singular). A tela começa recolhida; `canvasCenter()` é o centro da lona **aberta** e não
+depende de s, então o alinhamento do projetor não muda com a animação.
+
 ### Room e montagem (CG-69)
 
 `objects::Room` é dona de seis meshes RAII: piso, parede frontal/traseira compartilhada, parede lateral
