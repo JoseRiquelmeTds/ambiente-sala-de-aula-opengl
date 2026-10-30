@@ -40,19 +40,40 @@ Projector::Projector()
       rod_(primitives::cylinder(kRodRadius, kRodLength, 16, kMaterialTextureSize)),
       bracket_(primitives::box(kBracketSize, kMaterialTextureSize)),
       body_(primitives::box(kBodySize, kMaterialTextureSize)),
-      lensMesh_(primitives::cylinder(kLensRadius, kLensLength, 32)) {}
+      lensMesh_(primitives::cylinder(kLensRadius, kLensLength, 32)),
+      plasticTexture_("assets/textures/plastico_projetor.png"),
+      // Aço pintado de grafite, como o tubo da carteira: o reflexo da pintura é mais fraco e largo que o do aço nu.
+      metal_(materials::metal(glm::vec3(0.20f, 0.20f, 0.22f))),
+      // Branco: a cor (cinza claro) vem da textura. A UV do corpo já está em metros / 0,25, então uvScale fica 1.
+      plastic_(materials::plastic(glm::vec3(1.0f))),
+      // Vidro com tratamento escuro: quase não espalha luz (difusa baixa), mas reflete forte e nítido.
+      lensGlass_(materials::plastic(glm::vec3(0.05f))) {
+    // O material só guarda o ponteiro: a textura é membro deste objeto e vive o mesmo tempo.
+    plastic_.diffuseMap = &plasticTexture_;
+    metal_.specular = glm::vec3(0.55f);
+    metal_.shininess = 48.0f;
+    // Gabinete de ABS texturizado: reflexo mais fraco e espalhado que o do plástico liso do preset.
+    plastic_.specular = glm::vec3(0.25f);
+    plastic_.shininess = 24.0f;
+    lensGlass_.specular = glm::vec3(0.90f);
+    lensGlass_.shininess = 128.0f;
+    lensGlass_.emissive = glm::vec3(0.0f);  // apagado; a CG-77 acende
+}
 
 SceneNode& Projector::addTo(SceneNode& parent, const glm::mat4& placement) {
     if (root_ != nullptr) {
         return *root_;
     }
     root_ = &parent.addChild(nullptr, placement);
+    // O material da raiz (metal) vale para a placa e a haste; a cabeça e a lente sobrescrevem.
+    root_->material = &metal_;
 
     // As primitivas crescem de y = 0 para cima: para pendurar, desce a altura da própria peça.
     root_->addChild(&ceilingPlate_, translated({0.0f, -kPlateThickness, 0.0f}));
     root_->addChild(&rod_, translated(kTiltPivot));
 
     head_ = &root_->addChild(nullptr, headTransform());
+    head_->material = &plastic_;  // suporte e corpo herdam
     head_->addChild(&bracket_, translated({0.0f, -kBracketSize.y, 0.0f}));
     head_->addChild(&body_, translated({0.0f, -(kBracketSize.y + kBodySize.y), 0.0f}));
 
@@ -60,6 +81,7 @@ SceneNode& Projector::addTo(SceneNode& parent, const glm::mat4& placement) {
     glm::mat4 lensTransform = translated(kLensBase);
     lensTransform = glm::rotate(lensTransform, glm::radians(90.0f), {1.0f, 0.0f, 0.0f});
     lens_ = &head_->addChild(&lensMesh_, lensTransform);
+    lens_->material = &lensGlass_;
 
     return *root_;
 }
