@@ -119,6 +119,24 @@ reais.
 | Interruptor | espelho 0,08 × 0,12 m, a 1,1 m do chão |
 | Lixeira | 0,30 m de diâmetro, 0,40 m de altura |
 
+### Montagem da sala (CG-69)
+
+- `Room` delimita X = ±4, Z = ±3,5, piso superior Y = 0 e teto inferior Y = 3. Espessuras para fora:
+  paredes/teto de 0,10 m e piso de 0,12 m. Rodapés de 0,08 m avançam 0,016 m para dentro.
+- Parede frontal em -Z: tela em (0; 2,86; -3,5); quadro 3 × 1,2 m centrado em (0; 1,5; -3,5),
+  moldura pelo menos 14 mm atrás da lona, com bandeja e acessórios abaixo dela.
+- `StudentDesk` usa +Z para o **lado do aluno**, com porta-livros aberto. Isso difere da direção do olhar:
+  na montagem, carteiras sem giro recebem o aluno atrás, em +Z, olhando para -Z. Cada `Chair` olha para
+  -Z (giro de 180° em Y), em (X da carteira; 0; Z da carteira + 0,55). São seis conjuntos, com fileiras
+  de carteiras em Z = -0,85 / 0,65 / 2,15 e de cadeiras em Z = -0,30 / 1,20 / 2,70;
+  colunas em X = ±1,25. Não girar a carteira apenas para fazer +Z apontar para o quadro.
+- Fixações usam o pivô real: ventilador na parede esquerda gira +90° em Y (+Z local vira +X);
+  interruptor na direita gira -90° (+Z vira -X); luminárias e projetor encostam em Y = 3 e descem em -Y.
+- Room e cada instância são filhos diretos da raiz. Um único alvo por tipo; esconder os demais filhos também
+  esconde paredes, teto, piso e móveis repetidos. Enquadramentos são pontos locais transformados pelo placement.
+  Os nove alvos numéricos são preservados; cadeira e quadro completam os onze alvos do ciclo `[`/`]`.
+- UVs de Room repetem a cada 1 m nas superfícies principais e 0,5 m nos rodapés, sem escala nos placements.
+
 ## 8. Atalhos de teclado
 
 Para duas pessoas não usarem a mesma tecla. **Quem cria ou muda um atalho atualiza esta tabela e o README (§ Comandos)

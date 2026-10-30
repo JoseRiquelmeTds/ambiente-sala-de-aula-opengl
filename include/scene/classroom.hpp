@@ -18,6 +18,7 @@
 #include "objects/projection_screen.hpp"
 #include "objects/projector.hpp"
 #include "objects/trash_can.hpp"
+#include "objects/room.hpp"
 
 class Camera;
 class Input;
@@ -34,8 +35,8 @@ namespace scene {
 //  addTo no construtor e registre um alvo de inspeção (docs/ARQUITETURA.md § 4).
 //  Todo alvo é um filho direto da raiz: a inspeção esconde os outros filhos.
 //
-//  Cena de testes: o exemplo da estrutura de mesh (piso e objeto articulado) e os objetos já
-//  modelados, em posições provisórias até a montagem da sala (CG-69).
+//  Sala de 8 x 3 x 7 m (CG-69), com seis conjuntos de carteira/cadeira e quadro na parede frontal.
+//  Room e cada móvel são filhos diretos da raiz para o isolamento, compartilhando meshes por tipo.
 //
 //  Cria meshes e texturas: construir com o contexto OpenGL ativo e destruir antes da janela.
 class Classroom {
@@ -74,7 +75,6 @@ private:
 
     // Membros na ordem de construção: meshes e textura antes da árvore, que aponta para eles
     // e é destruída primeiro.
-    Mesh floorMesh_;
     Mesh baseMesh_;
     Mesh rodMesh_;
     Mesh armMesh_;
@@ -90,6 +90,7 @@ private:
     objects::TrashCan trashCan_;
     objects::Chair chair_;
     objects::Board board_;
+    objects::Room room_;
 
     SceneNode root_;
     std::vector<InspectionTarget> targets_;

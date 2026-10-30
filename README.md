@@ -93,10 +93,10 @@ e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo
 A carteira (CG-62, `objects::StudentDesk`) tem tampo de MDF de 0,60 × 0,45 m a 0,75 m do chão, estrutura de tubo de
 aço de 22 mm, porta-livros de arame sob o tampo e ponteiras de plástico. Pivô no chão, no centro entre os pés, com a
 frente (+Z) para o lado do aluno. Tubo e espessura do tampo vêm de `objects/furniture_style.hpp`, compartilhado com a
-cadeira. A posição em `Classroom` é provisória; até os materiais por peça (CG-72) ela usa a textura UV de teste.
+cadeira. As seis instâncias da montagem compartilham os meshes e usam a textura UV de teste até a CG-72.
 
 O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
-A origem local é a fixação na parede, com frente +Z. `Classroom` define seu posicionamento provisório;
+A origem local é a fixação na parede, com frente +Z. `Classroom` o fixa na parede esquerda, voltado para dentro;
 `objects::Fan::setRotorAngle(graus)` gira só pás e tampa, sem reconstruir geometria. A tecla `V` e a animação
 ficam para a CG-76. Até os materiais por peça (CG-72), ele usa a mesma textura UV provisória da cena;
 grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
@@ -105,9 +105,10 @@ A cadeira escolar (CG-60, décimo alvo, acessível por `[` e `]`) tem assento de
 placas de 0,018 m e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares
 de raio 0,011 m (16 segmentos), quadro sob o assento, travessas inferiores e dois montantes sustentam as placas;
 sapatas e fixações discretas completam a estrutura. O pivô fica no chão entre as pernas, com frente +Z.
-`objects::Chair::addTo` cria raízes independentes com meshes compartilhados; posição e enquadramento provisórios
-da CG-60 foram mantidos em `Classroom`. A cadeira usa `objects::furniture::kTubeRadius`, `kTubeSegments` e
-`kBoardThickness` do header compartilhado `include/objects/furniture_style.hpp` da CG-62, sem duplicar constantes.
+`objects::Chair::addTo` cria raízes independentes com meshes compartilhados; a CG-69 monta seis cadeiras atrás
+das carteiras, olhando para -Z, com inspeção acompanhando o placement. A cadeira usa `objects::furniture::kTubeRadius`,
+`kTubeSegments` e `kBoardThickness` do header compartilhado `include/objects/furniture_style.hpp` da CG-62,
+sem duplicar constantes.
 Até a CG-72, permanece a textura UV provisória: metal cinza-escuro e madeira laminada serão materiais por peça.
 
 O quadro escolar (CG-61, `objects::Board`) tem moldura externa de 3,00 × 1,20 m, painel estrutural de 16 mm e
@@ -115,8 +116,8 @@ superfície lisa de escrita de 2,95 × 1,15 m, com face frontal em Z local = 0,0
 Moldura nos quatro lados (25 mm de largura), quatro acabamentos de canto e bandeja inferior de 2,60 × 0,10 m
 com bordas completam o conjunto. Na bandeja ficam um apagador de 0,10 × 0,05 × 0,03 m (largura, profundidade,
 altura), com feltro separado, e dois marcadores de 0,13 m com tampas e extremidades separadas.
-O pivô fica no centro da face posterior de fixação, frente +Z; a posição provisória em `Classroom` é
-`(0, 1,50, -3,50)` m, com bordas da moldura a 0,90 e 2,10 m do chão, ajustável pela CG-69 só pelo placement.
+O pivô fica no centro da face posterior de fixação, frente +Z; a posição definitiva em `Classroom` é
+`(0, 1,50, -3,50)` m, com bordas da moldura a 0,90 e 2,10 m do chão.
 Moldura e cantos chegam a 0,022 e 0,024 m da parede: ficam pelo menos 14 mm atrás da traseira da lona
 (0,038 m), sem mudar a tela ou o alinhamento do projetor. A bandeja avança de 0,012 a 0,112 m da parede;
 com acessórios, fica entre 0,896 e 0,930 m do chão, abaixo da barra e do puxador da tela aberta.
@@ -130,14 +131,14 @@ A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubo
 a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,
 origem no centro da face encostada na parede e frente +Z; `objects::LightSwitch::setOn(bool)` só inclina a tecla, sem
 reconstruir geometria. A tecla `L` e o acender da luz ficam para a CG-73. Até os materiais por peça (CG-72), os dois
-usam a textura UV provisória da cena; as posições em `Classroom` também são provisórias.
+usam a textura UV provisória da cena; as luminárias encostam no teto e o interruptor fica na parede direita.
 
 A mesa do professor (CG-64) tem tampo de 1,20 × 0,60 m a 0,75 m do chão, laterais e painel frontal de MDF e um
 gaveteiro de 3 gavetas fixas com puxadores. O pivô fica no chão, no centro da mesa; a frente (+Z, painel frontal) é o
-lado da turma e as gavetas abrem para o professor (-Z). A posição em `Classroom` é provisória. Até os materiais por peça
+lado da turma e as gavetas abrem para o professor (-Z). A mesa fica na região frontal da sala. Até os materiais por peça
 (CG-72), usa a mesma textura UV da cena.
-A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede do quadro, em posição
-provisória até a sala (CG-69). A origem local é o centro da face da caixa encostada na parede, com frente +Z.
+A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede frontal.
+A origem local é o centro da face da caixa encostada na parede, com frente +Z.
 `objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a
 articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Até os materiais por peça (CG-72), ela usa
 a textura UV provisória da cena; a lona receberá `lona_tela.png`.
@@ -149,9 +150,42 @@ da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P`
 gabinete receberá `plastico_projetor.png`.
 
 A lixeira (CG-67) é um tronco de cone oco de 0,30 m de diâmetro na boca e 0,40 m de altura, com parede de 6 mm e
-borda com espessura, em posição provisória no canto da parede do quadro até a sala (CG-69). Pivô no centro do fundo.
+borda com espessura, no chão ao lado da região do quadro. Pivô no centro do fundo.
 O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Até os materiais por
 peça (CG-72), ela usa a textura UV provisória da cena; receberá `plastico_lixeira.png`.
+
+## Montagem da sala (CG-69)
+
+`objects::Room` forma um interior de **8 × 3 × 7 m**: X de -4 a +4, Y de 0 a 3 e Z de -3,5 a +3,5.
+O piso de 12 cm termina em Y = 0; o teto de 10 cm começa em Y = 3. As paredes de 10 cm crescem para fora
+do volume útil. Rodapés de 8 cm de altura dão acabamento. Piso, paredes, teto e rodapés têm meshes separados,
+normais externas aos sólidos (voltadas para a sala nas faces internas) e UVs físicas: repetição a cada 1 m
+nas superfícies principais e 0,5 m nos rodapés. A textura UV continua provisória (CG-72).
+
+| Elemento | Pivô no mundo (m) | Orientação / quantidade |
+| --- | --- | --- |
+| Carteiras | X = ±1,25; Y = 0; Z = -0,85 / 0,65 / 2,15 | 6, sem giro: +Z é o lado onde o aluno senta, olhando para -Z |
+| Cadeiras | X = ±1,25; Y = 0; Z = -0,30 / 1,20 / 2,70 | 6, giro de 180° em Y: frente -Z para o quadro |
+| Quadro | (0; 1,50; -3,50) | 1, frente +Z, atrás da tela; bandeja e acessórios preservados |
+| Mesa do professor | (0; 0; -2,35) | 1, painel +Z para a turma; 0,85 m até a parede |
+| Tela | (0; 2,86; -3,5) | 1, frente +Z, placement preservado |
+| Projetor | (0; 3; -0,5) | 1, giro de 180° em Y e `aimAt(canvasCenter)` preservado |
+| Ventilador | (-4; 2,35; -0,4) | 1, giro de +90° em Y: frente +X para dentro |
+| Luminárias | X = ±1,6; Y = 3; Z = ±1,5 | 4, face superior no teto, corpo descendo |
+| Interruptor | (4; 1,1; 2,8) | 1, giro de -90° em Y: frente -X para dentro |
+| Lixeira | (2,6; 0; -3,1) | 1, pivô no chão |
+| Demonstração articulada | (2,9; 0; 1,8) | 1, preservada na lateral |
+
+O corredor central tem 1,90 m entre tampos e as fileiras têm passo de 1,50 m. Cada cadeira fica 0,55 m atrás
+da sua carteira: a frente do assento tem 0,125 m de folga até o tampo, com espaço livre entre fileiras e junto
+à parede traseira. O quadro de 3 × 1,2 m fica centrado em (0; 1,5; -3,5), com a moldura pelo menos 14 mm atrás
+da lona. As geometrias originais de `Chair` (CG-60) e `Board` (CG-61) são reutilizadas sem alterações.
+
+A vista inicial e `1` usam a câmera em (3,3; 2,3; 3,1), dentro do corredor traseiro, olhando para
+(-0,4; 0,9; -0,7). Clique para navegar livremente com os controles acima; não há colisão ou gravidade.
+As teclas `2`–`9` e `0` mantêm a ordem existente: cada uma mostra só um exemplar do objeto, escondendo
+Room e todas as outras instâncias. `[` e `]` percorrem os onze alvos em ciclo, incluindo uma cadeira
+representativa como décimo alvo e o quadro como décimo primeiro. A câmera de cada inspeção acompanha o placement.
 
 ## Estrutura
 

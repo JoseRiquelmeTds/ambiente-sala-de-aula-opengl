@@ -5,9 +5,9 @@ Como o código está organizado, quem depende de quem e **onde colocar cada cois
 vértice) em [CONVENCOES.md](CONVENCOES.md).
 
 > [!NOTE]
-> O `gfx/material` ainda não existe: nasce com a CG-72. Por enquanto `scene/classroom` monta a cena de exemplo da
-> estrutura de mesh (piso e objeto articulado) e os objetos da Sprint 1 já modelados, em posição provisória até a
-> sala (CG-69).
+> O `gfx/material` ainda não existe: nasce com a CG-72. `scene/classroom` monta a sala de 8 × 3 × 7 m (CG-69),
+> com `objects::Room`, seis carteiras, seis cadeiras, quadro, quatro luminárias e os demais objetos disponíveis.
+> A demonstração articulada continua inspecionável; são onze alvos, incluindo cadeira (CG-60) e quadro (CG-61).
 
 ## Sumário
 
@@ -317,11 +317,12 @@ com a proporção atual do framebuffer e suspende o desenho quando a largura ou 
 na câmera. O movimento combinado é normalizado e usa `deltaTime`; o delta do mouse **não** usa
 `deltaTime`. Não há colisões, gravidade ou limite de deslocamento.
 
-A inspeção fica em `scene::Classroom` (CG-87, CG-60): `1` mostra a sala inteira. Os nove atalhos existentes ficam
+A inspeção fica em `scene::Classroom` (CG-87, CG-60, CG-61): `1` mostra a sala inteira. Os nove atalhos existentes ficam
 preservados: `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor,
 `7` = mesa do professor, `8` = tela retrátil, `9` = projetor e `0` = lixeira. A cadeira é registrada depois deles,
-como décimo alvo. `[` e `]` percorrem qualquer quantidade de alvos com retorno circular; após uma seleção numérica,
-continuam desse alvo. Da cena inteira, `]` vai ao primeiro e `[` ao último. `currentInspection_` começa em
+como décimo alvo e o quadro, como décimo primeiro. `[` e `]` percorrem os alvos com retorno circular;
+após uma seleção numérica, continuam desse alvo. Da cena inteira, `]` vai ao primeiro e `[` ao último.
+`currentInspection_` começa em
 `kWholeScene` e só muda quando `selectInspection()` aceita uma seleção, junto com o isolamento e o enquadramento.
 Funciona com a janela em foco, mesmo com o cursor livre; índice sem alvo é ignorado. Depois a câmera continua livre.
 A perda de foco libera o cursor e exige novo clique para retomar a navegação; com o cursor livre não há movimento
@@ -339,11 +340,32 @@ projector_.aimAt(toWorld(glm::inverse(projectorPlacement), screenCenter));
 ```
 
 `Projector::aimAt` gira só a articulação da cabeça em X (inclinação), calculando o ângulo para o **eixo da lente**,
-que fica abaixo do pivô, cruzar o alvo; o giro em Y é do placement. Com as posições atuais (provisórias até a CG-69) a
+que fica abaixo do pivô, cruzar o alvo; o giro em Y é do placement. Com as posições preservadas na CG-69, a
 inclinação é de ~12,5° e a lente fica a ~2,9 m da lona: throw ratio de ~1,45 para a imagem de 2,0 m. Como o
 alinhamento é calculado, mover a tela ou o projetor não exige ajustar ângulo nenhum. `lensCenter()` e
 `lensDirection()` dão a origem e a direção da projeção para a CG-77. Com o projetor inclinado e a tela vertical, a
 imagem real seria um trapézio (keystone): a CG-77 pode desenhar o slide direto na lona.
+
+### Room e montagem (CG-69)
+
+`objects::Room` é dona de seis meshes RAII: piso, parede frontal/traseira compartilhada, parede lateral
+compartilhada, teto e dois comprimentos de rodapé. `addTo(parent, placement) const` cria uma raiz vazia com dez
+peças (seis superfícies e quatro rodapés), reutilizando os meshes em outras instâncias. As caixas têm espessura
+para fora do volume interno e normais externas ao sólido, incluindo as faces voltadas para o ambiente.
+Os meshes distinguem piso, paredes, teto e acabamentos para a CG-72; não há materiais ou shaders novos.
+
+Em `Classroom`, `room_` é declarado antes de `root_`, assim como os outros donos de meshes. O piso provisório foi
+substituído. Room é filho direto da raiz, irmão de cada móvel: isolá-los oculta toda a envoltória e as outras
+instâncias. Seis chamadas a `StudentDesk::addTo`, seis a `Chair::addTo` e quatro a `Lamp::addTo` compartilham
+geometria, com nós independentes e referências estáveis (`unique_ptr` de `SceneNode`). Só o primeiro exemplar entra na inspeção;
+os nove alvos numéricos permanecem na mesma ordem, seguidos por cadeira e quadro no ciclo `[`/`]`.
+São 25 filhos diretos da raiz, dos quais onze são alvos representativos. A cadeira fica a +0,55 m em Z da
+carteira e gira 180° em Y; o quadro fica em (0; 1,5; -3,5), sem modificar os modelos da CG-60/CG-61.
+
+Os pontos das câmeras de inspeção são transformados do espaço local para o mundo pelo placement. `main` seleciona
+`kWholeScene` ao iniciar para usar o mesmo enquadramento da tecla `1`, sem acoplar `Camera` ao layout da sala.
+Layout e orientações definitivas estão no README e em CONVENCOES; iluminação e materiais seguem
+como CG-71/CG-72, e interações continuam em `Classroom::update` nas tasks correspondentes.
 
 ### Mesh, primitivas, SceneNode, Shader e Texture (CG-56 a CG-58)
 

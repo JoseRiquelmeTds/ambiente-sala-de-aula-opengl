@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <cstddef>
+#include <iterator>
 
 #include "core/camera.hpp"
 #include "core/input.hpp"
@@ -13,13 +14,13 @@ namespace scene {
 
 namespace {
 
-// Enquadramento da sala inteira (tecla 1); é também o inicial da Camera.
-constexpr glm::vec3 kSceneEye(2.0f, 2.0f, 3.0f);
-constexpr glm::vec3 kSceneCenter(0.0f, 0.4f, 0.0f);
+// Vista de dentro, pelo corredor traseiro; main também a seleciona na inicialização.
+constexpr glm::vec3 kSceneEye(3.3f, 2.3f, 3.1f);
+constexpr glm::vec3 kSceneCenter(-0.4f, 0.9f, -0.7f);
 
 // Medidas da sala (docs/CONVENCOES.md § 7): origem no centro do piso, parede do quadro em -Z.
-constexpr float kFrontWallZ = -3.5f;
-constexpr float kCeilingHeight = 3.0f;
+constexpr float kFrontWallZ = -objects::Room::kDepth / 2.0f;
+constexpr float kCeilingHeight = objects::Room::kHeight;
 
 // Caixa da tela retrátil no alto da parede do quadro: a lona aberta vai de 2,82 a 1,32 m do chão,
 // na frente do quadro (0,9 a 2,1 m).
@@ -27,6 +28,13 @@ constexpr glm::vec3 kScreenMount(0.0f, 2.86f, kFrontWallZ);
 
 // Projetor no teto, a ~3 m da tela: throw ratio de ~1,5 para a imagem de 2,0 m cobrir a lona.
 constexpr glm::vec3 kProjectorMount(0.0f, kCeilingHeight, -0.5f);
+
+// Mesmos eixos para carteira e cadeira: a cadeira fica atrás do tampo, do lado +Z da carteira.
+constexpr float kStudentColumns[] = {-1.25f, 1.25f};
+constexpr float kStudentRows[] = {-0.85f, 0.65f, 2.15f};
+constexpr float kChairOffsetZ = 0.55f;
+constexpr float kLampColumns[] = {-1.6f, 1.6f};
+constexpr float kLampRows[] = {-1.5f, 1.5f};
 
 // Ponto no espaço do objeto levado para o mundo: o enquadramento acompanha o placement.
 glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
@@ -36,23 +44,33 @@ glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
 }  // namespace
 
 Classroom::Classroom()
-    // Piso de 4 x 4 m com a textura repetindo a cada 1 m (com kDebugMode = 2, a UV vai de 0 a 4).
-    : floorMesh_(primitives::plane(4.0f, 4.0f, 1.0f)),
-      baseMesh_(primitives::cylinder(0.25f, 0.05f)),
+    : baseMesh_(primitives::cylinder(0.25f, 0.05f)),
       rodMesh_(primitives::cylinder(0.025f, 1.0f, 16)),
       armMesh_(primitives::box({0.5f, 0.04f, 0.04f})),
       testTexture_("assets/textures/uv_teste.png") {
-    root_.addChild(&floorMesh_);
+    room_.addTo(root_, glm::mat4(1.0f));
 
-    // Carteira (CG-62) em posição provisória, sem rotação: a frente (lado do aluno) fica para +Z.
-    // Ocupa a tecla 2, que era do cubo de teste: as teclas 2–9 e 0 já estavam todas em uso.
-    const glm::mat4 studentDeskPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 1.2f));
-    const SceneNode& studentDesk = studentDesk_.addTo(root_, studentDeskPlacement);
-    targets_.push_back({"carteira", &studentDesk, {1.7f, 1.1f, 2.3f}, {1.0f, 0.5f, 1.2f}});  // tecla 2
+    // Duas colunas, três fileiras: corredor central de 1,90 m e passo de 1,50 m entre fileiras.
+    // No modelo real, +Z é o lado do ALUNO (porta-livros aberto), não a direção do olhar.
+    // Sem giro, o aluno fica atrás da carteira em +Z e olha para a tela em -Z.
+    // Cada instância é filha direta da raiz: a inspeção da primeira esconde as outras cinco.
+    for (std::size_t i = 0; i < std::size(kStudentRows); ++i) {
+        for (std::size_t j = 0; j < std::size(kStudentColumns); ++j) {
+            const float z = kStudentRows[i];
+            const float x = kStudentColumns[j];
+            const glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z));
+            const SceneNode& desk = studentDesk_.addTo(root_, placement);
+            if (i == 0 && j == 0) {
+                targets_.push_back({"carteira", &desk, toWorld(placement, {0.7f, 1.1f, 1.1f}),
+                                    toWorld(placement, {0.0f, 0.5f, 0.0f})});  // tecla 2
+            }
+        }
+    }
 
     // Objeto composto: base -> haste -> articulação (sem mesh) -> braço.
     // Mover a base leva todo o resto junto; girar a articulação só mexe no braço.
-    SceneNode& base = root_.addChild(&baseMesh_, glm::translate(glm::mat4(1.0f), glm::vec3(0.8f, 0.0f, 0.0f)));
+    const glm::mat4 demoPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(2.9f, 0.0f, 1.8f));
+    SceneNode& base = root_.addChild(&baseMesh_, demoPlacement);
     SceneNode& rod = base.addChild(&rodMesh_, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.05f, 0.0f)));
 
     // Pivô no topo da haste (y = 1 no espaço da haste), girado 45° em Y e 20° para cima em Z.
@@ -64,30 +82,42 @@ Classroom::Classroom()
     // O braço tem o pivô na base e centrado em x; deslocado 0,25 m para começar no pivô
     // em vez de atravessá-lo, e 0,02 m para baixo para o eixo do braço passar pelo pivô.
     joint.addChild(&armMesh_, glm::translate(glm::mat4(1.0f), glm::vec3(0.25f, -0.02f, 0.0f)));
-    targets_.push_back({"objeto articulado", &base, {2.0f, 1.4f, 2.0f}, {0.9f, 0.6f, 0.0f}});
+    targets_.push_back({"objeto articulado", &base, toWorld(demoPlacement, {1.2f, 1.4f, 2.0f}),
+                        toWorld(demoPlacement, {0.1f, 0.6f, 0.0f})});  // tecla 3
 
-    // Posição provisória para testes. A montagem final poderá mudar só esta matriz T · R.
-    glm::mat4 fanPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(-0.2f, 1.2f, -0.7f));
-    fanPlacement = glm::rotate(fanPlacement, glm::radians(15.0f), glm::vec3(0, 1, 0));
+    // Fixação na parede esquerda: Ry(+90°) leva a frente +Z para +X, para dentro da sala.
+    // O centro do rotor fica 0,16 m acima do pivô; a grade termina abaixo de Y = 2,79 m.
+    glm::mat4 fanPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(-4.0f, 2.35f, -0.4f));
+    fanPlacement = glm::rotate(fanPlacement, glm::radians(90.0f), glm::vec3(0, 1, 0));
     const SceneNode& fan = fan_.addTo(root_, fanPlacement);
     // Enquadramentos no espaço do objeto acompanham também uma futura mudança de orientação.
     const glm::vec3 fanEye = glm::vec3(fanPlacement * glm::vec4(0.48f, 0.40f, 1.10f, 1.0f));
     const glm::vec3 fanCenter = glm::vec3(fanPlacement * glm::vec4(0, 0.13f, 0.23f, 1.0f));
     targets_.push_back({"ventilador", &fan, fanEye, fanCenter});  // tecla 4
 
-    // Posições provisórias (ainda não há teto nem paredes): só translação, a montagem da sala
-    // (CG-69) troca estas matrizes. Lâmpada com o pivô a 2,8 m, como se encostada no teto.
-    const SceneNode& lamp = lamp_.addTo(root_, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.8f, 1.0f)));
-    targets_.push_back({"lâmpada", &lamp, {0.5f, 2.0f, 2.1f}, {0.0f, 2.76f, 1.0f}});  // tecla 5, de baixo
+    // Face superior em Y = 3: o modelo desce em -Y. Quatro instâncias, longe do projetor central.
+    for (std::size_t i = 0; i < std::size(kLampRows); ++i) {
+        for (std::size_t j = 0; j < std::size(kLampColumns); ++j) {
+            const float z = kLampRows[i];
+            const float x = kLampColumns[j];
+            const glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, kCeilingHeight, z));
+            const SceneNode& lamp = lamp_.addTo(root_, placement);
+            if (i == 0 && j == 0) {
+                targets_.push_back({"lâmpada", &lamp, toWorld(placement, {0.5f, -0.8f, 1.1f}),
+                                    toWorld(placement, {0.0f, -0.04f, 0.0f})});  // tecla 5, de baixo
+            }
+        }
+    }
 
-    // Interruptor a 1,1 m do chão, frente para +Z: como se houvesse uma parede atrás dele, em -Z.
-    const SceneNode& lightSwitch =
-        lightSwitch_.addTo(root_, glm::translate(glm::mat4(1.0f), glm::vec3(-1.6f, 1.1f, 1.6f)));
-    targets_.push_back({"interruptor", &lightSwitch, {-1.5f, 1.16f, 1.86f}, {-1.6f, 1.1f, 1.61f}});  // tecla 6
+    // Parede direita, região traseira: Ry(-90°) leva a frente +Z para -X, voltada ao interior.
+    glm::mat4 switchPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f, 1.1f, 2.8f));
+    switchPlacement = glm::rotate(switchPlacement, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    const SceneNode& lightSwitch = lightSwitch_.addTo(root_, switchPlacement);
+    targets_.push_back({"interruptor", &lightSwitch, toWorld(switchPlacement, {0.1f, 0.06f, 0.26f}),
+                        toWorld(switchPlacement, {0.0f, 0.0f, 0.01f})});  // tecla 6
 
-    // Posição provisória para testes (a montagem da sala é a CG-69). Sem rotação, a frente da mesa (+Z, painel
-    // frontal) já fica voltada para a turma, que olha para -Z.
-    const glm::mat4 deskPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, -1.3f));
+    // Painel frontal +Z para a turma; 0,85 m entre tampo e parede para circulação do professor.
+    const glm::mat4 deskPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.35f));
     const SceneNode& teacherDesk = teacherDesk_.addTo(root_, deskPlacement);
     // Enquadramento no espaço da mesa, do lado do professor (-Z) para mostrar as gavetas: acompanha a mesa se a
     // posição ou a orientação mudarem.
@@ -111,7 +141,7 @@ Classroom::Classroom()
     targets_.push_back({"projetor", &projector, toWorld(projectorPlacement, {0.55f, -0.35f, 0.75f}),
                         toWorld(projectorPlacement, {0.0f, -0.22f, 0.0f})});  // tecla 9
 
-    // Lixeira (CG-67): no chão, no canto da parede do quadro (posição provisória até a sala, CG-69).
+    // Lixeira (CG-67): no chão, ao lado da região do quadro, fora da circulação da mesa.
     // Simétrica em Y, então basta a translação.
     const glm::mat4 trashCanPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(2.6f, 0.0f, -3.1f));
     const SceneNode& trashCan = trashCan_.addTo(root_, trashCanPlacement);
@@ -119,17 +149,26 @@ Classroom::Classroom()
     targets_.push_back({"lixeira", &trashCan, toWorld(trashCanPlacement, {-0.45f, 0.85f, 0.55f}),
                         toWorld(trashCanPlacement, {0.0f, 0.18f, 0.0f})});  // tecla 0
 
-    // Posição e enquadramento originais da CG-60; a cadeira é o décimo alvo, acessível por [ e ].
-    glm::mat4 chairPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.35f, 0.0f, 1.05f));
-    chairPlacement = glm::rotate(chairPlacement, glm::radians(-20.0f), glm::vec3(0, 1, 0));
-    const SceneNode& chair = chair_.addTo(root_, chairPlacement);
-    const glm::vec3 chairEye = glm::vec3(chairPlacement * glm::vec4(0.72f, 0.80f, 0.98f, 1.0f));
-    const glm::vec3 chairCenter = glm::vec3(chairPlacement * glm::vec4(0.0f, 0.42f, -0.03f, 1.0f));
-    targets_.push_back({"cadeira", &chair, chairEye, chairCenter});
+    // Cadeiras (CG-60): Ry(180°) leva a frente local +Z para -Z, olhando para o quadro.
+    // O recuo de 0,55 m deixa 0,125 m entre a frente do assento e a borda do tampo.
+    // Um só alvo representativo, depois dos nove anteriores; os outros cinco são irmãos independentes.
+    for (std::size_t i = 0; i < std::size(kStudentRows); ++i) {
+        for (std::size_t j = 0; j < std::size(kStudentColumns); ++j) {
+            const float z = kStudentRows[i];
+            const float x = kStudentColumns[j];
+            glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z + kChairOffsetZ));
+            placement = glm::rotate(placement, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            const SceneNode& chair = chair_.addTo(root_, placement);
+            if (i == 0 && j == 0) {
+                targets_.push_back({"cadeira", &chair, toWorld(placement, {0.72f, 0.80f, 0.98f}),
+                                    toWorld(placement, {0.0f, 0.42f, -0.03f})});  // décimo alvo, [ e ]
+            }
+        }
+    }
 
     // Quadro (CG-61): centro da fixação na parede, bordas a 0,90 e 2,10 m do chão.
     // Corpo/moldura ficam atrás da lona; bandeja e acessórios abaixo da ponta da tela aberta.
-    // Posição provisória até a CG-69: geometria e enquadramento acompanham somente este placement.
+    // Fixação definitiva: a moldura fica ao menos 14 mm atrás da lona, sem mover tela nem projetor.
     const glm::mat4 boardPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, kFrontWallZ));
     const SceneNode& board = board_.addTo(root_, boardPlacement);
     targets_.push_back({"quadro", &board, toWorld(boardPlacement, {0.85f, 0.65f, 3.10f}),
