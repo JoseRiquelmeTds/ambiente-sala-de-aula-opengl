@@ -159,6 +159,10 @@ glm::vec3 ProjectionScreen::canvasCenter() const {
 }
 
 void ProjectionScreen::applyOpenAmount() {
+    // Densidade de texels constante: a escala S(1, s, 1) encurta a lona, mas a UV continua de 0 a 1 e a trama
+    // achataria em Y. Repetir a textura só 6·s vezes mantém o período de 25 cm. Como v = 0 é a borda de baixo,
+    // a trama fica presa à barra e some pelo topo, como o tecido enrolando no rolo.
+    canvasMaterial_.uvScale.y = kCanvasHeight * openAmount_ / kCanvasTexturePeriod;
     if (root_ == nullptr) {
         return;  // addTo aplica o valor guardado
     }

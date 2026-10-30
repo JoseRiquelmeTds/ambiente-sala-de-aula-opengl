@@ -32,10 +32,10 @@ namespace objects {
 //  por smoothstep: acelera ao sair e freia ao chegar. Inverter no meio do curso é contínuo, porque
 //  só o sentido do progresso muda. s fica entre kMinOpenAmount e kMaxOpenAmount.
 //
-//  UV da lona: a imagem inteira na face (textureSize = 0), para o slide da CG-77. Ao recolher,
-//  a UV continua de 0 a 1 e a imagem achata em Y. A distorção é aceita: a lona é lisa e o slide
-//  só aparece com a tela aberta. A trama da lona (lona_tela.png) repete pelo uvScale do material,
-//  a cada 25 cm nos dois eixos.
+//  UV da lona: a imagem inteira na face (textureSize = 0), para o slide da CG-77. A trama da lona
+//  (lona_tela.png) repete pelo uvScale do material, a cada 25 cm nos dois eixos. Ao recolher, a
+//  UV continua de 0 a 1; por isso o uvScale.y acompanha a abertura (6·s) e a trama não achata:
+//  ela fica presa à barra de baixo e entra na caixa pelo topo.
 //
 //  Materiais (CG-78): caixa e suportes de plástico branco-gelo (na raiz); lona fosca branca com a
 //  textura de trama (na articulação); barra inferior de alumínio, cordinha cinza-escura fosca e
@@ -86,7 +86,7 @@ private:
     // antes do material na declaração, porque os membros são construídos nessa ordem.
     Texture canvasTexture_;
     Material housingPlastic_;  // caixa e suportes laterais
-    Material canvasMaterial_;  // lona; a CG-75 ajusta o uvScale.y conforme a abertura
+    Material canvasMaterial_;  // lona; uvScale.y acompanha a abertura (applyOpenAmount)
     Material barMetal_;        // barra inferior
     Material cordMatte_;       // cordinha
     Material handlePlastic_;   // puxador
