@@ -136,7 +136,7 @@ A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubo
 a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,
 origem no centro da face encostada na parede e frente +Z; `objects::LightSwitch::setOn(bool)` só inclina a tecla, sem
 reconstruir geometria. A tecla `L` (CG-73) apaga e acende as quatro luminárias: a tecla do interruptor bascula, as luzes
-pontuais desligam, os tubos param de brilhar e a luz ambiente cai, mas a janela continua iluminando a sala
+pontuais desligam, os tubos param de brilhar e a luz ambiente cai, mas a luz de preenchimento continua iluminando a sala
 ([docs/ILUMINACAO.md § 9](docs/ILUMINACAO.md#9-interação-ligar-a-luz)). Materiais (CG-74), só cor, sem textura:
 calha de chapa pintada de branco, refletor de alumínio, vidro leitoso do tubo e soquete de plástico; o interruptor é
 de plástico branco brilhante. As luminárias encostam no teto e o interruptor fica na parede direita.
