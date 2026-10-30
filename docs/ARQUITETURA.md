@@ -189,13 +189,14 @@ public:
 
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement);  // uma instância só
     void toggle();                  // liga/desliga (CG-76)
-    void update(float deltaTime);   // gira o rotor se estiver ligado
+    void update(float deltaTime);   // acelera/desacelera e gira o rotor; chamar também desligado
 
 private:
     Mesh body_;
     Mesh blade_;
     SceneNode* rotor_ = nullptr;    // pivô no centro das hélices, criado em addTo
-    float angle_ = 0.0f;            // radianos
+    float angle_ = 0.0f;            // graus
+    float speed_ = 0.0f;            // graus/s
     bool on_ = false;
 };
 
@@ -203,7 +204,8 @@ private:
 ```
 
 ```cpp
-// src/objects/fan.cpp (trecho; kRotorCenter e kSpeed são constantes do namespace anônimo do arquivo)
+// src/objects/fan.cpp (trecho simplificado; kRotorCenter, kSpeed, kSpinUp e kSpinDown são constantes do namespace
+// anônimo do arquivo)
 Fan::Fan() : body_(primitives::cylinder(0.08f, 0.25f)), blade_(primitives::box({0.06f, 0.01f, 0.20f})) {}
 
 SceneNode& Fan::addTo(SceneNode& parent, const glm::mat4& placement) {
@@ -214,11 +216,15 @@ SceneNode& Fan::addTo(SceneNode& parent, const glm::mat4& placement) {
 }
 
 void Fan::update(float deltaTime) {
-    if (!on_ || rotor_ == nullptr) {
+    // Ligado, acelera até kSpeed; desligado, desacelera até 0. Tudo proporcional a deltaTime.
+    const float target = on_ ? kSpeed : 0.0f;
+    speed_ = speed_ < target ? std::min(speed_ + kSpinUp * deltaTime, target)
+                             : std::max(speed_ - kSpinDown * deltaTime, target);
+    if (speed_ <= 0.0f || rotor_ == nullptr) {
         return;
     }
-    angle_ = std::remainder(angle_ + kSpeed * deltaTime, glm::two_pi<float>());
-    rotor_->transform = glm::rotate(glm::translate(glm::mat4(1.0f), kRotorCenter), angle_, {0.0f, 0.0f, 1.0f});
+    angle_ = std::remainder(angle_ + speed_ * deltaTime, 360.0f);
+    rotor_->transform = glm::rotate(glm::translate(glm::mat4(1.0f), kRotorCenter), glm::radians(angle_), {0, 0, 1});
 }
 ```
 
