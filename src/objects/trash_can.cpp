@@ -43,7 +43,10 @@ void addFrustumWall(MeshData& data, float r0, float r1, float y0, float y1, bool
         if (inward) {
             normal = -normal;
         }
-        const float u = uMax * static_cast<float>(i) / static_cast<float>(kSegments);
+        // Vista de dentro, a volta anda para a esquerda: na parede interna u corre ao contrário, senão a
+        // textura apareceria espelhada (u tem de crescer para a direita de quem olha a face).
+        const float turn = static_cast<float>(i) / static_cast<float>(kSegments);
+        const float u = uMax * (inward ? 1.0f - turn : turn);
         data.vertices.push_back({radial * r0 + glm::vec3(0.0f, y0, 0.0f), normal, {u, y0 / kTextureSize}});
         data.vertices.push_back({radial * r1 + glm::vec3(0.0f, y1, 0.0f), normal, {u, y1 / kTextureSize}});
     }
@@ -136,10 +139,23 @@ MeshData makeBody() {
 
 }  // namespace
 
-TrashCan::TrashCan() : body_(makeBody()) {}
+TrashCan::TrashCan()
+    : body_(makeBody()),
+      plasticTexture_("assets/textures/plastico_lixeira.png"),
+      // Branco: a cor (azul) vem da textura.
+      plastic_(materials::plastic(glm::vec3(1.0f))) {
+    // O material só guarda o ponteiro: a textura é membro deste objeto e vive o mesmo tempo.
+    plastic_.diffuseMap = &plasticTexture_;
+    // Polipropileno injetado é acetinado: reflexo mais fraco e largo que o do plástico liso do preset.
+    plastic_.specular = glm::vec3(0.30f);
+    plastic_.shininess = 24.0f;
+}
 
 SceneNode& TrashCan::addTo(SceneNode& parent, const glm::mat4& placement) const {
-    return parent.addChild(&body_, placement);
+    // Todas as instâncias apontam para o mesmo material (SceneNode::material é const Material*).
+    SceneNode& root = parent.addChild(&body_, placement);
+    root.material = &plastic_;
+    return root;
 }
 
 }  // namespace objects

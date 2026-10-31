@@ -251,6 +251,35 @@ branco (a cor vem da imagem). O tiling vem do `textureSize` das primitivas (UV e
   ambiente, preenchimento e luminárias, um branco puro passaria de 1 nas faces de frente para a luz, e o OpenGL cortaria em
   branco chapado, sem volume.
 
+### Materiais aplicados (CG-78: tela retrátil, projetor e lixeira)
+
+Aqui os plásticos e a lona têm textura (`plastico_projetor.png`, `plastico_lixeira.png`, `lona_tela.png`), com
+`diffuse` branco ou quase: a cor vem da imagem. Metais, vidro, cordinha e puxador são só cor.
+
+| Peça | Preset | `diffuse` | `specular` | `shininess` | Textura (metros por repetição) |
+| --- | --- | --- | --- | --- | --- |
+| Projetor: placa do teto e haste | metal | (0,20; 0,20; 0,22) grafite | 0,55 | 48 | — |
+| Projetor: suporte e corpo | plastic | 1 | 0,25 | 24 | `plastico_projetor.png` (0,25 m) |
+| Projetor: lente (`lensGlass_`) | plastic | 0,05 | 0,90 | 128 | — (`emissive` 0; a CG-77 acende) |
+| Tela: caixa e suportes laterais | plastic | (0,92; 0,92; 0,90) branco-gelo | 0,30 | 24 | — |
+| Tela: lona (`canvasMaterial_`) | matte | 0,90 | 0,01 | 4 | `lona_tela.png` (0,25 m, `uvScale` = {8, 6}) |
+| Tela: barra inferior | metal | (0,55; 0,55; 0,57) alumínio | 0,85 | 64 | — |
+| Tela: cordinha | matte | 0,15 | 0,01 | 4 | — |
+| Tela: puxador | plastic | 0,05 | 0,20 | 16 | — |
+| Lixeira (peça inteira) | plastic | 1 | 0,30 | 24 | `plastico_lixeira.png` (0,25 m) |
+
+- **Material na articulação:** o projetor põe o metal na raiz (placa e haste herdam), o plástico na cabeça (suporte
+  e corpo) e o vidro só na lente. Na tela, a lona recebe o material no nó da articulação (`canvasPivot_`) e a barra
+  no nó da ponta (`bottom_`); cordinha e puxador sobrescrevem dentro da ponta.
+- **Tiling da lona pelo `uvScale`:** a UV da lona vai de 0 a 1 na face inteira, reservada para o slide da CG-77. Para a
+  trama não esticar 2,0 × 1,5 m numa imagem quadrada, `uvScale = (largura, altura) / 0,25 m` = {8, 6}
+  (`kCanvasTexturePeriod` em `src/objects/projection_screen.cpp`). Com a lona recolhida a escala em Y achata a trama;
+  a CG-75 faz o `uvScale.y` acompanhar a abertura. Projetor e lixeira já têm UV em metros / 0,25, então `uvScale` = 1.
+- **Lona abaixo de 1:** a textura da lona já é quase branca; com `diffuse` 0,90 ela fica clara sem cortar em branco
+  chapado sob as luminárias, e a trama continua visível.
+- **Sem espelhar:** a parede interna da lixeira tem u invertido em relação à externa, porque vista de dentro a volta
+  anda para a esquerda; assim a textura aparece na mesma orientação nas duas faces.
+
 ### Herança pela árvore
 
 `SceneNode` tem `const Material* material = nullptr` (ponteiro **não dono**, como o `mesh`). No `SceneNode::draw`:

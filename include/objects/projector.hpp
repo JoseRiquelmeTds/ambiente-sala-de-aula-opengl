@@ -3,8 +3,10 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
+#include "gfx/texture.hpp"
 
 namespace objects {
 
@@ -24,7 +26,12 @@ namespace objects {
 //  inclinação para o eixo da lente passar por um ponto. O giro em Y (para onde o projetor
 //  aponta na sala) é do placement.
 //
-//  Criar com contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes.
+//  Materiais (CG-78): placa do teto e haste de metal grafite (na raiz); suporte e corpo de
+//  plástico cinza com textura (plastico_projetor.png, na cabeça); lente de vidro escuro e
+//  brilhante, com material próprio para a CG-77 acender só ela (emissive do lensGlass_).
+//
+//  Criar com contexto OpenGL ativo e manter vivo enquanto a árvore usar seus meshes, a
+//  textura e os materiais.
 class Projector {
 public:
     Projector();
@@ -55,10 +62,18 @@ private:
     Mesh bracket_;
     Mesh body_;
     Mesh lensMesh_;
+
+    // Os nós da árvore apontam para estes materiais, e o plástico aponta para a textura: a textura
+    // vem antes do material na declaração, porque os membros são construídos nessa ordem.
+    Texture plasticTexture_;
+    Material metal_;      // placa do teto e haste
+    Material plastic_;    // suporte e corpo
+    Material lensGlass_;  // lente; a CG-77 liga o emissive quando o projetor acende
+
     // Não donos: nós criados em addTo, que vivem na árvore do pai.
     SceneNode* root_ = nullptr;
     SceneNode* head_ = nullptr;
-    SceneNode* lens_ = nullptr;  // a CG-77 troca o material daqui
+    SceneNode* lens_ = nullptr;  // aponta para lensGlass_
     float tiltRadians_ = 0.0f;
 };
 
