@@ -38,8 +38,8 @@ const Material kDefaultMaterial = materials::neutral();
 // Envia as luzes para os uniforms do shader (nomes e structs em shaders/basic.frag).
 void setLighting(const Shader& shader, const Lighting& lighting) {
     shader.setVec3("uAmbient", lighting.ambient);
-    shader.setVec3("uWindowLight.direction", lighting.window.direction);
-    shader.setVec3("uWindowLight.color", lighting.window.color);
+    shader.setVec3("uFillLight.direction", lighting.fill.direction);
+    shader.setVec3("uFillLight.color", lighting.fill.color);
 
     // Só as luzes ligadas entram no array, uma atrás da outra; uPointLightCount diz ao shader
     // quantas posições valem. Assim desligar uma luz não exige mudar o shader.
