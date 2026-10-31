@@ -158,6 +158,10 @@ glm::vec3 ProjectionScreen::canvasCenter() const {
     return kSlot + glm::vec3(0.0f, -kCanvasHeight * 0.5f, kCanvasThickness * 0.5f);
 }
 
+glm::vec2 ProjectionScreen::canvasSize() const {
+    return {kCanvasWidth, kCanvasHeight};
+}
+
 void ProjectionScreen::applyOpenAmount() {
     // Densidade de texels constante: a escala S(1, s, 1) encurta a lona, mas a UV continua de 0 a 1 e a trama
     // achataria em Y. Repetir a textura só 6·s vezes mantém o período de 25 cm. Como v = 0 é a borda de baixo,

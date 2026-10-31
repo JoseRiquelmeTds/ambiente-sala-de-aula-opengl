@@ -16,6 +16,7 @@ cada coisa fica no código: [§ 6](#6-onde-está-no-código). Para aplicar mater
 7. [Materiais](#7-materiais)
 8. [Como aplicar material no seu objeto](#8-como-aplicar-material-no-seu-objeto)
 9. [Interação: ligar a luz](#9-interação-ligar-a-luz)
+10. [Projetor: textura projetiva (CG-77)](#10-projetor-textura-projetiva-cg-77)
 
 ---
 
@@ -174,6 +175,8 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Normal para o mundo | `shaders/basic.vert` |
 | Blinn-Phong, atenuação, modos de depuração | `shaders/basic.frag` (`blinnPhong`, `shade`, `albedo`) |
 | Ligar/desligar a luz (tecla `L`) | `src/scene/classroom.cpp` (`Classroom::update`, `Classroom::setLightOn`), `Lamp::setLit` |
+| Projetor: matrizes, tecla `P` e setas (CG-77) | `src/scene/classroom.cpp` (construtor, `Classroom::setProjectorOn`), `Projector::setOn`, `Projector::nextSlide` |
+| Projetor: struct, envio e termo de luz (CG-77) | `ProjectorLight` em `include/gfx/light.hpp`, `src/gfx/renderer.cpp`, `projectorLight` em `shaders/basic.frag` |
 | Struct `Material`, presets e envio (`uMaterial.*`) | `include/gfx/material.hpp`, `src/gfx/material.cpp` |
 | Herança do material pela árvore | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
 | Material padrão (`materials::neutral()`) | `src/gfx/renderer.cpp` (`kDefaultMaterial`) |
@@ -375,3 +378,120 @@ O que muda em cada chamada:
 - **Por que o tubo precisa de emissiva:** a luz pontual fica abaixo dos tubos, então ela ilumina a parte de baixo do
   vidro, mas o modelo não tem nada que faça uma superfície parecer uma fonte de luz. A emissiva soma uma cor fixa,
   independente de luzes e normais: o tubo aparece aceso de qualquer ângulo. Apagado, ele volta a ser só vidro.
+
+## 10. Projetor: textura projetiva (CG-77)
+
+A tecla `P` liga o projetor e o slide aparece na tela retrátil; `←` e `→` trocam o slide. O slide **não** é uma
+textura colada na lona: o projetor é uma **luz que carrega uma imagem** (*projective texture mapping*). Cada
+fragmento da cena pergunta "em que ponto da imagem do projetor eu estou?" e recebe a luz daquele texel. A imagem
+cai onde o feixe bater: na lona aberta, no quadro e na parede com a tela recolhida, em quem passar na frente.
+
+### O projetor como câmera
+
+A pergunta é a mesma que a câmera responde para desenhar a cena: onde um ponto do mundo cai na imagem. Então o
+projetor ganha uma view e uma projeção próprias, como uma câmera posta na lente:
+
+```
+V_proj = lookAt(lente, lente + eixo, cima)          mundo -> espaço do projetor
+P_proj = perspective(fovY, 4/3, 0,1 m, 10 m)        espaço do projetor -> clip
+```
+
+`lente`, `eixo` e `cima` são `Projector::lensCenter()`, `lensDirection()` e `lensUp()` levados ao mundo pelo
+placement (as direções só pela parte 3×3, sem translação), já com a inclinação calculada por `aimAt`
+([ARQUITETURA.md § 6](ARQUITETURA.md#projetor-e-tela-retrátil-cg-65-cg-66-cg-77)). O produto `P_proj · V_proj` é
+calculado uma vez no construtor da `Classroom` e enviado como `uProjector.viewProjection`. No fragment shader, cada
+fragmento percorre a cadeia:
+
+```
+mundo --V_proj--> projetor --P_proj--> clip (x, y, z, w) --÷w--> NDC [-1, 1] --×0,5 + 0,5--> UV [0, 1]
+```
+
+- **÷w:** é a divisão de perspectiva que a GPU faz sozinha com `gl_Position`; aqui ela é feita à mão. É o que faz
+  um ponto mais longe ocupar menos da imagem: o mesmo texel cobre uma área maior quanto mais longe da lente.
+- **×0,5 + 0,5:** leva o quadrado do NDC (-1 a 1) para o da textura (0 a 1). O centro da imagem (NDC 0) vira a UV
+  (0,5; 0,5), o centro do slide.
+- **w ≤ 0:** o ponto está atrás da lente (w é a profundidade na frente do projetor). A divisão inverteria o sinal
+  de x e y e projetaria o slide espelhado nas costas do projetor; esses fragmentos não recebem nada.
+- **NDC fora de [-1, 1]:** fora do frustum do projetor. Em x e y é fora da imagem (fora do cone de luz); em z é
+  antes do near (0,1 m) ou depois do far (10 m). Não recebem nada. O slide usa `ClampToEdge`, para a borda não
+  "vazar" pelo lado oposto no filtro linear.
+
+### Ângulo de abertura pelo throw ratio
+
+O *throw ratio* de um projetor real é distância ÷ largura da imagem. A lente fica a `d` = 2,89 m do centro da lona
+(inclinação de 12,5° na montagem da CG-69) e a imagem ocupa 92% dos 2,0 m de largura no centro (`kImageFill`,
+motivo no [keystone](#keystone)): `w` = 1,84 m, throw ratio de ~1,57. Com o eixo como cateto de dois triângulos
+retângulos:
+
+```
+fovX = 2 · atan( (w/2) / d )              = 2 · atan(0,92 / 2,89)    ≈ 35,3°
+fovY = 2 · atan( tan(fovX/2) / aspecto )  = 2 · atan(0,318 / 1,333)  ≈ 26,9°
+```
+
+`glm::perspective` recebe o fov **vertical** e o aspecto 4:3 dos slides (1024 × 768). A largura vem de
+`ProjectionScreen::canvasSize()` e a distância da posição real da lente: mover a tela ou o projetor recalcula tudo.
+
+### Orientação: em pé e sem espelhar
+
+O `lookAt` monta os eixos da "câmera" do projetor: frente = eixo da lente, cima = `lensUp` e direita =
+frente × cima. O projetor está girado 180° em Y (olha para -Z, como a turma), então no mundo a frente é
+(0; -0,22; -0,98), o cima (0; 0,98; -0,22) e a direita sai **+X**, a direita de quem olha para a tela de dentro da
+sala. Logo, +X do projetor → NDC +x → u crescendo para a direita da plateia, e cima → v crescendo para cima. A
+`Texture` inverte a imagem na carga (v = 0 é a linha de baixo do arquivo), então v = 1 é o topo do slide e ele
+aparece em pé. É projeção frontal, com projetor e plateia do mesmo lado da tela: sem espelho. O bloco laranja no
+canto superior esquerdo de cada slide serve para conferir.
+
+### Termo de luz
+
+```
+projetor = albedo · slide(u, v) · cor · max(N·L, 0) · (d_ref / d)²
+```
+
+- **slide(u, v):** a cor do texel é a cor da luz que chega ali. Branco ilumina; preto não ilumina. Um projetor
+  não projeta preto: as partes escuras do slide só não recebem luz e ficam com a cor que a sala já dá à superfície.
+- **Lambert, `N·L`:** a mesma difusa das outras luzes, com L do fragmento para a lente. Uma face de costas para o
+  projetor (o verso da lona) não recebe imagem.
+- **(d_ref / d)²:** a mesma luz se espalha por uma área que cresce com o quadrado da distância. Com `d_ref` = a
+  distância até o centro da lona, o fator é 1 ali e `cor` (0,90; 0,90; 0,85) é a força do feixe na tela. Não há
+  termo constante nem linear como nas lâmpadas: o feixe é concentrado e não há luz rebatida a imitar. `d` tem um
+  mínimo de `kEpsilon` (1e-4), como nas lâmpadas: com o fragmento em cima da lente, `L = toLens / d` e `1 / d²`
+  dividiriam por zero. O near já descarta esses pontos; o mínimo protege se ele mudar.
+- **Sem especular:** a lona é fosca, e o reflexo de uma lente pequena seria um ponto. O termo é somado em `shade()`
+  sem mudar nenhum dos outros.
+
+Com as lâmpadas acesas, a lona já recebe de 0,7 a 0,8 de luz: as partes brancas do slide somam mais ~0,6 e
+saturam em 1, e as escuras ficam no cinza claro da sala. A imagem aparece clara e com pouco contraste, como num
+projetor real com a luz da sala acesa. Apagando as lâmpadas (`L`), a lona cai para ~0,15 e o slide se destaca.
+
+### Keystone
+
+O projetor está acima do centro da lona e inclinado para baixo, e a lona é vertical: a imagem não chega
+perpendicular. A borda de baixo da imagem fica mais longe da lente (~3,05 m) que a de cima (~2,73 m) e, como a
+largura cresce com a distância, sai mais larga: um **trapézio mais largo embaixo** (keystone). Na lona, ~1,75 m de
+largura em cima (a 2,74 m do chão) e ~1,94 m embaixo (a 1,32 m). Por isso a imagem ocupa 92% da largura no centro:
+com 95%, a base passaria da lona. Projetores reais corrigem isso deformando a imagem ao contrário (correção de
+keystone); aqui o trapézio fica, como num projetor sem correção.
+
+### Limitações
+
+- **Sem shadow map:** o shader não sabe se há algo entre a lente e o fragmento. A imagem também cai no quadro e na
+  parede **atrás** da lona aberta; para a turma, a própria lona esconde essa cópia. Pela mesma razão, alguém na
+  frente do projetor recebe a imagem no corpo, mas não faz sombra na tela. Resolver exigiria renderizar a
+  profundidade da cena do ponto de vista do projetor e comparar (*shadow mapping*).
+- **Tela recolhida:** a imagem cai no quadro e na parede, sem regra especial; é o resultado natural da técnica
+  (decisão da CG-77).
+
+### Interação e texturas
+
+| O quê | Ligado | Desligado | Efeito no shader |
+| --- | --- | --- | --- |
+| `Lighting::projector.enabled` | `true` | `false` | `uProjector.enabled`: desligado, `projectorLight` devolve 0 sem calcular nada |
+| `emissive` do vidro da lente (`Projector::setOn`) | (0,85; 0,90; 1,0) | 0 | `uMaterial.emissive` da lente: acesa de qualquer ângulo, como o tubo da lâmpada |
+
+A tecla `P` chama `Classroom::setProjectorOn`, no mesmo desenho do `setLightOn` ([§ 9](#9-interação-ligar-a-luz)); o
+projetor começa desligado. `←` e `→` trocam o slide em ciclo (`Projector::nextSlide`, `previousSlide`), mesmo com o
+projetor desligado, e a `Classroom` atualiza `Lighting::projector.image`.
+
+O slide fica na **unidade de textura 1** (`kProjectorTextureUnit`, `src/gfx/renderer.cpp`): a 0 é a da cor difusa,
+religada pelo `Material::apply` de cada peça. O renderer liga o slide uma vez por frame, e o sampler
+`uProjector.image` aponta sempre para a 1, mesmo com o projetor desligado.

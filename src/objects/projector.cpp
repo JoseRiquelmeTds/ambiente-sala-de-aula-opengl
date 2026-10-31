@@ -26,6 +26,18 @@ constexpr float kLensLength = 0.03f;
 // Base da lente: centro da face da frente do corpo, na meia altura dele.
 constexpr glm::vec3 kLensBase(0.0f, -(kBracketSize.y + kBodySize.y * 0.5f), kBodySize.z * 0.5f);
 
+// Brilho próprio da lente com o projetor ligado (CG-77), somado sem depender de luz nenhuma: o vidro
+// escuro aparece aceso de qualquer ângulo, como a lâmpada do projetor vista pela lente. Branco frio,
+// puxando para o azul, como a lâmpada de projetor.
+constexpr glm::vec3 kLensLitEmissive(0.85f, 0.90f, 1.0f);
+
+// Slides projetados (CG-77), em 4:3 como a imagem do projetor. A ordem é a da apresentação.
+constexpr const char* kSlidePaths[] = {
+    "assets/textures/slide_cg_1.png",  // pipeline gráfico
+    "assets/textures/slide_cg_2.png",  // eixos X, Y e Z
+    "assets/textures/slide_cg_3.png",  // triângulo com cores interpoladas
+};
+
 // Plástico do gabinete repete a textura a cada 25 cm; a lente estica a imagem.
 constexpr float kMaterialTextureSize = 0.25f;
 
@@ -57,7 +69,11 @@ Projector::Projector()
     plastic_.shininess = 24.0f;
     lensGlass_.specular = glm::vec3(0.90f);
     lensGlass_.shininess = 128.0f;
-    lensGlass_.emissive = glm::vec3(0.0f);  // apagado; a CG-77 acende
+    lensGlass_.emissive = glm::vec3(0.0f);  // começa apagado; setOn acende (CG-77)
+
+    for (const char* path : kSlidePaths) {
+        slides_.push_back(std::make_unique<Texture>(path, Texture::Wrap::ClampToEdge));
+    }
 }
 
 SceneNode& Projector::addTo(SceneNode& parent, const glm::mat4& placement) {
@@ -114,6 +130,42 @@ glm::vec3 Projector::lensCenter() const {
 
 glm::vec3 Projector::lensDirection() const {
     return glm::normalize(glm::vec3(headTransform() * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));
+}
+
+glm::vec3 Projector::lensUp() const {
+    return glm::normalize(glm::vec3(headTransform() * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
+}
+
+void Projector::setOn(bool on) {
+    on_ = on;
+    lensGlass_.emissive = on ? kLensLitEmissive : glm::vec3(0.0f);
+}
+
+void Projector::toggle() {
+    setOn(!on_);
+}
+
+void Projector::nextSlide() {
+    if (!slides_.empty()) {
+        currentSlide_ = (currentSlide_ + 1) % slides_.size();
+    }
+}
+
+void Projector::previousSlide() {
+    if (!slides_.empty()) {
+        currentSlide_ = (currentSlide_ + slides_.size() - 1) % slides_.size();
+    }
+}
+
+const Texture* Projector::currentSlide() const {
+    // Começa no slide atual e, se ele não carregou, segue para o próximo válido.
+    for (std::size_t i = 0; i < slides_.size(); ++i) {
+        const Texture& slide = *slides_[(currentSlide_ + i) % slides_.size()];
+        if (slide.isValid()) {
+            return &slide;
+        }
+    }
+    return nullptr;
 }
 
 glm::mat4 Projector::headTransform() const {

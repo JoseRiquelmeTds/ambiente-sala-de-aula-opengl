@@ -52,6 +52,7 @@ public:
     // L: liga/desliga as luzes do teto (CG-73).
     // T: abre/recolhe a tela retrátil, animada com deltaTime (CG-75).
     // V: liga/desliga o ventilador; Shift+V: troca a velocidade (CG-76). Anima o rotor com deltaTime.
+    // P: liga/desliga o projetor; ← e →: slide anterior/próximo (CG-77).
     void update(const Input& input, float deltaTime);
 
     // Tecla 1 mostra a sala inteira; 2 a 9 e 0 preservam os nove primeiros alvos.
@@ -74,6 +75,10 @@ private:
     // brilho dos tubos e a parte da luz ambiente que vem das lâmpadas. Tudo de uma vez, sem animação,
     // como um fluorescente real.
     void setLightOn(bool on);
+
+    // Liga ou desliga o projetor (CG-77): a lente acende e a luz do projetor (lighting_.projector), que
+    // leva o slide atual até a tela, entra na conta do shader. Instantâneo, como a luz.
+    void setProjectorOn(bool on);
 
     struct InspectionTarget {
         std::string name;
@@ -108,6 +113,7 @@ private:
     std::vector<InspectionTarget> targets_;
     int currentInspection_ = kWholeScene;
     bool lightOn_ = true;  // luzes do teto (CG-73); a sala começa acesa
+    bool projectorOn_ = false;  // projetor (CG-77); começa desligado
 };
 
 }  // namespace scene
