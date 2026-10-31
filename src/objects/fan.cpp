@@ -17,6 +17,18 @@ constexpr float kWireRadius = 0.0018f;
 constexpr int kRingSegments = 80;
 constexpr int kWireSegments = 6;
 
+// Velocidades do rotor (CG-76), em graus/s: 2, 3 e 4 voltas/s. Bem abaixo de um ventilador real (~20 voltas/s)
+// por causa do aliasing temporal (efeito roda de carroça): as 3 pás repetem a imagem a cada 120°, então o giro por
+// frame precisa ficar abaixo de 60° (Nyquist, metade da simetria), senão o rotor parece parado ou girando para trás.
+// Um ventilador real daria exatamente 120°/frame a 60 FPS e pareceria parado. 4 voltas/s = 24°/frame a 60 FPS e
+// 48° a 30 FPS; só abaixo de 24 FPS a mais rápida passa do limite.
+constexpr float kSpeeds[] = {720.0f, 1080.0f, 1440.0f};
+constexpr int kSpeedCount = static_cast<int>(sizeof(kSpeeds) / sizeof(kSpeeds[0]));
+// Aceleração angular, graus/s². Ligar: o motor leva de 0 a 4 voltas/s em 1,5 s. Desligar: sem motor, só atrito e
+// inércia freiam, então demora o dobro (para em 3 s a partir de 4 voltas/s).
+constexpr float kSpinUp = 960.0f;
+constexpr float kSpinDown = 480.0f;
+
 glm::mat4 translated(const glm::vec3& position) {
     return glm::translate(glm::mat4(1.0f), position);
 }
@@ -194,7 +206,35 @@ void Fan::setRotorAngle(float degrees) {
     }
     rotorAngle_ = std::remainder(degrees, 360.0f);
     if (rotor_ != nullptr) {
+        // AB2 · Rotação: transform = T(centro do rotor) · Rz(θ). Lido da direita para a esquerda, gira pás e tampa
+        // em volta da origem do rotor (o eixo do motor, Z) e depois leva tudo ao centro do motor. Só a matriz da
+        // articulação muda; os vértices nunca são reconstruídos, e grades, motor e eixo (no nó fixo) não giram.
         rotor_->transform = glm::rotate(translated(kRotorCenter), glm::radians(rotorAngle_), {0, 0, 1});
+    }
+}
+
+void Fan::toggle() {
+    on_ = !on_;
+}
+
+void Fan::cycleSpeed() {
+    speedLevel_ = (speedLevel_ + 1) % kSpeedCount;
+}
+
+void Fan::update(float deltaTime) {
+    // AB2 · Rotação: integração de Euler explícita, ω ± a·Δt e depois θ += ω·Δt, com Δt em segundos. O giro
+    // por segundo é o mesmo a 30 ou 144 FPS; só muda o tamanho de cada passo. Ligado, acelera até a velocidade
+    // escolhida (ou desacelera, se ela baixou); desligado, desacelera até 0 sem passar do alvo.
+    const float target = on_ ? kSpeeds[speedLevel_] : 0.0f;
+    if (speed_ < target) {
+        speed_ = std::min(speed_ + kSpinUp * deltaTime, target);
+    } else {
+        speed_ = std::max(speed_ - kSpinDown * deltaTime, target);
+    }
+    if (speed_ > 0.0f) {
+        // setRotorAngle reduz o ângulo a [-180°, 180°] (std::remainder): somado sem limite, depois de horas
+        // ligado o float perderia as casas decimais e o passo de cada frame começaria a ser arredondado.
+        setRotorAngle(rotorAngle_ + speed_ * deltaTime);
     }
 }
 

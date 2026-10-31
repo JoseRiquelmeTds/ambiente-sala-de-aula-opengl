@@ -82,11 +82,13 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | `[` / `]` | Alvo anterior / próximo, em ciclo pelos onze alvos: cadeira após a lixeira e quadro ao final |
 | `L` | Liga / desliga as luzes do teto, como o interruptor da parede (a sala começa acesa) |
 | `T` | Abre / recolhe a tela retrátil, com animação suave; apertar no meio do curso inverte o sentido |
+| `V` | Liga / desliga o ventilador (começa desligado) |
+| `Shift` + `V` | Troca a velocidade do ventilador: 2, 3 ou 4 voltas/s (começa na mais rápida) |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`), a luz (`L`) e a
-tela (`T`) funcionam mesmo assim.
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`), a luz (`L`), a
+tela (`T`) e o ventilador (`V`) funcionam mesmo assim.
 As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
 Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona o quadro. O ciclo retorna do último alvo ao primeiro
 e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
@@ -102,9 +104,12 @@ tubo e do laminado também ficam em `objects/furniture_style.hpp`, prontos para 
 
 O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
 A origem local é a fixação na parede, com frente +Z. `Classroom` o fixa na parede esquerda, voltado para dentro;
-`objects::Fan::setRotorAngle(graus)` gira só pás e tampa, sem reconstruir geometria. A tecla `V` e a animação
-ficam para a CG-76. Até receber os próprios materiais, ele usa o material padrão (cinza claro fosco);
-grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
+`objects::Fan::setRotorAngle(graus)` gira só pás e tampa, sem reconstruir geometria. Com `V` (CG-76) ele liga e
+desliga: o rotor acelera até a velocidade escolhida em até 1,5 s e, desligado, desacelera até parar em até 3 s, com o
+giro calculado por `deltaTime` (igual em qualquer FPS). `Shift` + `V` alterna entre 2, 3 e 4 voltas/s, abaixo de um
+ventilador real para as três pás não parecerem paradas ou girando para trás na tela (efeito roda de carroça). Só o
+rotor gira, em torno do eixo do motor; grades, motor e suporte ficam parados. Até receber os próprios materiais, ele
+usa o material padrão (cinza claro fosco); grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
 
 A cadeira escolar (CG-60, décimo alvo, acessível por `[` e `]`) tem assento de 0,40 × 0,40 m com topo a 0,45 m,
 placas de 0,018 m e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares
