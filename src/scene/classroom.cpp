@@ -232,11 +232,16 @@ Classroom::Classroom()
     setLightOn(true);
 }
 
-void Classroom::update(const Input& input, float /*deltaTime*/) {
+void Classroom::update(const Input& input, float deltaTime) {
     // keyPressed vale só no frame em que a tecla desce (borda): segurar L não fica piscando a luz.
     if (input.keyPressed(GLFW_KEY_L)) {
         setLightOn(!lightOn_);
     }
+    // Tela retrátil (CG-75): T alterna entre abrir e recolher; a animação avança todo frame até o limite.
+    if (input.keyPressed(GLFW_KEY_T)) {
+        screen_.toggle();
+    }
+    screen_.update(deltaTime);
     // Interações (CG-75, CG-76, CG-77) e animações entram aqui.
 }
 

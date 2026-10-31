@@ -41,8 +41,21 @@ constexpr float kMinVisibleAmount = 0.001f;
 // Metal e plástico repetem a textura a cada 25 cm; a lona tem UV de 0 a 1 (tiling no material, acima).
 constexpr float kMaterialTextureSize = 0.25f;
 
+// Tempo do curso inteiro, de recolhida a aberta (CG-75). Um curso parcial leva a fração correspondente.
+constexpr float kTravelSeconds = 2.5f;
+
 glm::mat4 translated(const glm::vec3& position) {
     return glm::translate(glm::mat4(1.0f), position);
+}
+
+// Curva de suavização em [0, 1]: derivada zero nas pontas, então a tela sai e chega sem tranco.
+float smoothstep(float t) {
+    return t * t * (3.0f - 2.0f * t);
+}
+
+// Inversa de smoothstep em [0, 1] (raiz da cúbica 3t² - 2t³ = x no intervalo).
+float inverseSmoothstep(float x) {
+    return 0.5f - std::sin(std::asin(1.0f - 2.0f * x) / 3.0f);
 }
 
 }  // namespace
@@ -118,7 +131,26 @@ void ProjectionScreen::setOpenAmount(float amount) {
     if (!std::isfinite(amount)) {
         return;
     }
-    openAmount_ = std::clamp(amount, 0.0f, 1.0f);
+    openAmount_ = std::clamp(amount, kMinOpenAmount, kMaxOpenAmount);
+    // Progresso que daria esta abertura, para o update seguinte continuar daqui sem saltar.
+    const float normalized = (openAmount_ - kMinOpenAmount) / (kMaxOpenAmount - kMinOpenAmount);
+    progress_ = std::clamp(inverseSmoothstep(normalized), 0.0f, 1.0f);
+    opening_ = progress_ > 0.5f;
+    applyOpenAmount();
+}
+
+void ProjectionScreen::toggle() {
+    opening_ = !opening_;
+}
+
+void ProjectionScreen::update(float deltaTime) {
+    const float target = opening_ ? 1.0f : 0.0f;
+    if (progress_ == target || !(deltaTime > 0.0f)) {
+        return;  // parada no limite, ou deltaTime inválido (zero, negativo ou NaN)
+    }
+    const float step = deltaTime / kTravelSeconds;
+    progress_ = std::clamp(opening_ ? progress_ + step : progress_ - step, 0.0f, 1.0f);
+    openAmount_ = kMinOpenAmount + (kMaxOpenAmount - kMinOpenAmount) * smoothstep(progress_);
     applyOpenAmount();
 }
 
@@ -127,10 +159,16 @@ glm::vec3 ProjectionScreen::canvasCenter() const {
 }
 
 void ProjectionScreen::applyOpenAmount() {
+    // Densidade de texels constante: a escala S(1, s, 1) encurta a lona, mas a UV continua de 0 a 1 e a trama
+    // achataria em Y. Repetir a textura só 6·s vezes mantém o período de 25 cm. Como v = 0 é a borda de baixo,
+    // a trama fica presa à barra e some pelo topo, como o tecido enrolando no rolo.
+    canvasMaterial_.uvScale.y = kCanvasHeight * openAmount_ / kCanvasTexturePeriod;
     if (root_ == nullptr) {
         return;  // addTo aplica o valor guardado
     }
-    // T · S: lido da direita para a esquerda, escala em Y em volta do topo da lona e depois leva até a fenda.
+    // AB2 · Escala: T(fenda) · S(1, s, 1). Lido da direita para a esquerda, a escala em Y acontece em volta
+    // da origem da articulação, que é o topo da lona, e só depois a translação leva esse topo até a fenda.
+    // Assim a lona encolhe para cima e continua presa à caixa; a escala nunca move o pivô.
     canvasPivot_->transform = glm::scale(translated(kSlot), {1.0f, openAmount_, 1.0f});
     canvasPivot_->visible = openAmount_ > kMinVisibleAmount;
     // A ponta acompanha a borda de baixo da lona, só com translação.
