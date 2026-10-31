@@ -5,7 +5,8 @@ Como o código está organizado, quem depende de quem e **onde colocar cada cois
 vértice) em [CONVENCOES.md](CONVENCOES.md).
 
 > [!NOTE]
-> O `gfx/material` ainda não existe: nasce com a CG-72. `scene/classroom` monta a sala de 8 × 3 × 7 m (CG-69),
+> Iluminação Blinn-Phong (CG-71) e materiais por peça (CG-72): [ILUMINACAO.md](ILUMINACAO.md), com o passo a passo
+> para aplicar material num objeto. `scene/classroom` monta a sala de 8 × 3 × 7 m (CG-69),
 > com `objects::Room`, seis carteiras, seis cadeiras, quadro, quatro luminárias e os demais objetos disponíveis.
 > A demonstração articulada continua inspecionável; são onze alvos, incluindo cadeira (CG-60) e quadro (CG-61).
 
@@ -35,7 +36,7 @@ update(...)                                  main.cpp       atalhos globais (Q, 
   │    └─ fan.update(deltaTime) ...          objects/       animação de cada objeto
   ├─ classroom.handleInspection(input, cam)  scene/         teclas 1-9, 0, [, ]: inspeção e enquadramento
   └─ camera.rotate(...) / camera.move(...)   core/camera    navegação, só com o cursor capturado
-renderer::draw(camera, root, texture)        gfx/renderer   shader, matrizes view/projeção, desenha a árvore
+renderer::draw(camera, root, lighting)       gfx/renderer   shader, matrizes view/projeção, luzes, desenha a árvore
 glfwSwapBuffers(window);
 ```
 
@@ -81,16 +82,17 @@ include/                         src/
 │   ├── scene_node.hpp           │   ├── scene_node.cpp     hierarquia de peças (model = pai · transform)
 │   ├── shader.hpp               │   ├── shader.cpp         programa GLSL, set* de uniforms
 │   ├── texture.hpp              │   ├── texture.cpp        PNG/JPG -> textura com mipmaps
-│   ├── material.hpp             │   ├── material.cpp       (a criar, CG-72) cor, textura, brilho por peça
+│   ├── light.hpp                │   │                      structs das luzes (CG-71), só dados
+│   ├── material.hpp             │   ├── material.cpp       cor, textura, especular e brilho por peça (CG-72)
 │   └── renderer.hpp             │   └── renderer.cpp       estado do GL e desenho do frame
 ├── objects/                     ├── objects/               (a criar na Sprint 1)
-│   ├── furniture_style.hpp      │   │                      medidas e materiais comuns de carteira e cadeira
+│   ├── furniture_style.hpp      │   ├── furniture_style.cpp medidas e materiais comuns de carteira e cadeira
 │   ├── fan.hpp ...              │   ├── fan.cpp ...        um módulo por objeto (tabela abaixo)
 │   └── room.hpp                 │   └── room.cpp           paredes, piso e teto
 └── scene/                       ├── scene/
     └── classroom.hpp            │   └── classroom.cpp      monta a sala, inspeção, teclas das interações
                                  └── main.cpp               janela, contexto, loop, atalhos globais
-shaders/                         basic.vert, basic.frag (e os da iluminação, CG-71)
+shaders/                         basic.vert, basic.frag (Blinn-Phong e modos de depuração, CG-71)
 assets/textures/                 imagens + tabela de licenças (README.md)
 ```
 
@@ -126,7 +128,9 @@ Nomes de classe e arquivo seguem [DEV-CONVENCOES.md § Nomes](DEV-CONVENCOES.md#
 | Animação contínua (hélice girando) | `update(float deltaTime)` do objeto, chamado por `Classroom::update` | — |
 | Uma primitiva nova (cone, esfera, tubo curvo) | `gfx/primitives.hpp/.cpp` | comentário no header com pivô e UV |
 | Peça que nenhuma primitiva faz | `MeshData` montado no `.cpp` do objeto (vértices + índices) | — |
-| Material / iluminação | `gfx/material.*`, `shaders/` e `gfx/renderer.cpp` (CG-71, CG-72) | `SceneNode` ganha `material` |
+| Material de um objeto | membro `Material` (+ `Texture`) no objeto, `node.material = &material_` no `addTo` | [ILUMINACAO.md § 8](ILUMINACAO.md#8-como-aplicar-material-no-seu-objeto) |
+| Um preset de material novo | `namespace materials` em `gfx/material.hpp/.cpp` | tabela de presets em [ILUMINACAO.md § 7](ILUMINACAO.md#7-materiais) |
+| Uma luz na sala | `lighting_` no construtor de `scene/classroom.cpp` (`gfx/light.hpp`) | [ILUMINACAO.md](ILUMINACAO.md) § 5 |
 | Uma textura | `assets/textures/` | tabela de licenças em `assets/textures/README.md` |
 | Um uniform novo | shader em `shaders/` + `set*` em quem desenha | comentário no shader dizendo quem define |
 | Atalho global (sair, capturar cursor) | `update` em `src/main.cpp` | tabela de atalhos e README |
@@ -245,8 +249,8 @@ inspeção esconde os outros filhos da raiz.
 
 ## 5. Revisão e refactor
 
-Revisão feita na CG-53, sobre o `dev` depois do merge da CG-55 (PR #6). R1 a R3 foram feitos na **CG-87**; o R4 fica
-para a CG-72.
+Revisão feita na CG-53, sobre o `dev` depois do merge da CG-55 (PR #6). R1 a R3 foram feitos na **CG-87** e o R4 na
+**CG-72**.
 
 ### O que está bom e fica
 
@@ -265,7 +269,7 @@ para a CG-72.
 | P3 | Interações e animação não têm lugar: o único `update` é o de `main.cpp`. | CG-73, CG-75, CG-76 e CG-77 colocariam lógica de objeto no `main.cpp`. |
 | P4 | Uma textura e um `uColor` para a cena inteira, definidos no `renderer::draw`. | Não há onde pendurar material por peça (CG-72) nem textura por objeto (CG-70, CG-74, CG-78). |
 | P5 | `include/` e `src/` planos. | Com 10 objetos + sala, seriam mais de 20 headers misturados sem fronteira entre motor e conteúdo. |
-| P6 | A normal matrix é calculada no vertex shader (`inverse` por vértice). | Irrelevante para o tamanho da sala; vale passar para a CPU (`setMat3`, já existe) quando a CG-71 mexer no shader. Opcional. |
+| P6 | A normal matrix é calculada no vertex shader (`inverse` por vértice). | Irrelevante para o tamanho da sala; vale passar para a CPU (`setMat3`, já existe) quando a CG-71 mexer no shader. Feito na CG-71 (`uNormalMatrix` no `SceneNode::draw`). |
 
 ### Plano
 
@@ -274,7 +278,7 @@ para a CG-72.
 | R1 | `git mv` dos módulos para `core/` (input, camera) e `gfx/` (vertex, mesh, primitives, scene_node, shader, texture, renderer); includes viram `"gfx/mesh.hpp"` e os guards ganham a pasta (`AULA_OPENGL_GFX_MESH_HPP`). | P5 | feito (CG-87) |
 | R2 | Cria `scene/classroom` com a cena de exemplo atual (dona dos meshes, da textura e da árvore). O renderer passa a só desenhar: `renderer::draw(const Camera&, const SceneNode& root, const Texture* texture)`, sem globais de conteúdo. A textura única é provisória até o R4. | P1 | feito (CG-87) |
 | R3 | Inspeção vira uma lista de alvos `{nome, nó, enquadramento}` em `Classroom`; teclas `1` (sala inteira) e `2`–`9` (cada alvo), mantendo `1`/`2`/`3` da CG-55. `update` do `main.cpp` chama `classroom.update(input, deltaTime)` (interações e animação) e `classroom.handleInspection(input, camera)`. | P2, P3 | feito (CG-87) |
-| R4 | Junto com a CG-72: `Material` (cor, textura, brilho) em `gfx/`, ponteiro `const Material* material` no `SceneNode`, aplicado no `SceneNode::draw`. Remove o parâmetro `texture` do `renderer::draw` e a textura de `Classroom`. | P4 | pendente |
+| R4 | Junto com a CG-72: `Material` (cor, textura, brilho) em `gfx/`, ponteiro `const Material* material` no `SceneNode`, aplicado no `SceneNode::draw`. Remove o parâmetro `texture` do `renderer::draw` e a textura de `Classroom`. | P4 | feito (CG-72) |
 
 ## 6. Detalhes dos módulos
 
@@ -366,6 +370,21 @@ Os pontos das câmeras de inspeção são transformados do espaço local para o 
 `kWholeScene` ao iniciar para usar o mesmo enquadramento da tecla `1`, sem acoplar `Camera` ao layout da sala.
 Layout e orientações definitivas estão no README e em CONVENCOES; iluminação e materiais seguem
 como CG-71/CG-72, e interações continuam em `Classroom::update` nas tasks correspondentes.
+
+### Iluminação (CG-71)
+
+Blinn-Phong por fragmento em `shaders/basic.frag`: ambiente, uma luz direcional de preenchimento e até quatro luzes
+pontuais com atenuação, uma por luminária. `scene/classroom` monta as luzes (`Lighting`, `gfx/light.hpp`) e as expõe
+em `lighting()`; `renderer::draw` só as envia como uniforms, sem saber de onde vêm. A normal matrix é calculada na CPU
+por peça. Técnica, fórmulas e valores: [ILUMINACAO.md](ILUMINACAO.md).
+
+### Materiais (CG-72)
+
+`Material` (`gfx/material.hpp`) guarda cor difusa, textura opcional (não dona) com `uvScale`, especular, brilho e
+emissiva, e se envia ao shader com `apply` (`uMaterial.*`, textura na unidade 0). `SceneNode::material` é um ponteiro
+não dono **herdado** pelos filhos: o material vai na raiz do objeto e só as peças diferentes sobrescrevem. Peça sem
+material em nenhum ancestral usa `materials::neutral()`, o padrão do renderer. Presets (`metal`, `wood`, `plastic`,
+`matte`) em `namespace materials`; a demonstração articulada usa madeira, metal e plástico.
 
 ### Mesh, primitivas, SceneNode, Shader e Texture (CG-56 a CG-58)
 

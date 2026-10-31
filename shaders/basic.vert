@@ -12,6 +12,9 @@ uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;
 
+// Normal matrix = transpose(inverse(mat3(uModel))), calculada na CPU por peça (SceneNode::draw).
+uniform mat3 uNormalMatrix;
+
 // Saídas interpoladas para o fragment shader.
 out vec3 vWorldPos;  // posição no mundo (a iluminação vai precisar)
 out vec3 vNormal;    // normal no mundo
@@ -23,7 +26,9 @@ void main() {
 
     // Normal matrix: com escala não uniforme, multiplicar a normal pela model a entorta
     // e ela deixa de ser perpendicular à superfície. A inversa transposta corrige isso.
-    vNormal = normalize(transpose(inverse(mat3(uModel))) * aNormal);
+    // Não normaliza aqui: a interpolação entre vértices encurta o vetor de qualquer jeito,
+    // então o fragment shader normaliza depois.
+    vNormal = uNormalMatrix * aNormal;
 
     vUV = aUV;
 

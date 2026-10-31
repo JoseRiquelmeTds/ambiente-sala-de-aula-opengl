@@ -127,7 +127,7 @@ int main() {
             if (glfwWindowShouldClose(window)) {
                 break;
             }
-            renderer::draw(camera, classroom.root(), &classroom.texture());
+            renderer::draw(camera, classroom.root(), classroom.lighting());
             glfwSwapBuffers(window);
         }
     }

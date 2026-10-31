@@ -36,6 +36,39 @@ constexpr float kChairOffsetZ = 0.55f;
 constexpr float kLampColumns[] = {-1.6f, 1.6f};
 constexpr float kLampRows[] = {-1.5f, 1.5f};
 
+// --- Iluminação (CG-71), técnica em docs/ILUMINACAO.md ---------------------
+// Tubo fluorescente branco neutro (puxando de leve para o quente), com pouco mais de metade da
+// força máxima: o centro da sala recebe as quatro luminárias somadas e, com 1,0, o piso e as
+// paredes estouravam para branco.
+constexpr glm::vec3 kLampLightColor(0.55f, 0.53f, 0.50f);
+
+// Atenuação 1 / (1 + 0,14·d + 0,07·d²), d em metros. Na sala de 3 m de pé-direito, o tampo de uma
+// carteira fica a ~2,2 m da luminária mais próxima (fator ~0,60) e o piso logo abaixo a ~2,9 m
+// (~0,50); o canto mais distante, a ~8 m, recebe ~0,15. Assim o centro da sala fica claro e os
+// cantos escurecem aos poucos, sem a queda brusca de uma atenuação só quadrática. Os termos se
+// igualam em d = 2 m: antes pesa o linear (queda suave), depois o quadrático (a luz morre antes
+// de atravessar a sala inteira).
+constexpr float kLampConstant = 1.0f;
+constexpr float kLampLinear = 0.14f;
+constexpr float kLampQuadratic = 0.07f;
+
+// Luz ambiente: piso de claridade para nenhuma face ficar preta (luz rebatida nas paredes).
+// Baixa o bastante para as faces voltadas às lâmpadas continuarem mais claras que as outras.
+constexpr glm::vec3 kAmbientLight(0.25f, 0.25f, 0.26f);
+
+// Ambiente com as lâmpadas apagadas (CG-73). A luz ambiente aproxima a luz rebatida nas paredes, e
+// parte dela vem das próprias lâmpadas: com elas apagadas, sobra só a claridade do dia rebatida. Por
+// isso cai para cerca de 80% e puxa para o azul do dia. Não vai a zero: junto com o preenchimento,
+// nenhuma face fica preta (a sala de dia, com a luz apagada, continua visível). Quem escurece de
+// verdade a sala são as 4 luzes pontuais que saem da conta.
+constexpr glm::vec3 kAmbientLightOff(0.20f, 0.21f, 0.23f);
+
+// Luz de preenchimento: direcional, representa a claridade do dia (a sala não tem janela modelada).
+// Vem da esquerda (-X) de quem olha para o quadro, lado onde as salas costumam ter janelas, viaja
+// para +X e desce. Fraca e levemente azulada: só dá volume às faces que as lâmpadas iluminam de lado.
+constexpr glm::vec3 kFillDirection(1.0f, -0.6f, 0.15f);
+constexpr glm::vec3 kFillColor(0.16f, 0.17f, 0.19f);
+
 // Ponto no espaço do objeto levado para o mundo: o enquadramento acompanha o placement.
 glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
     return glm::vec3(placement * glm::vec4(local, 1.0f));
@@ -47,8 +80,14 @@ Classroom::Classroom()
     : baseMesh_(primitives::cylinder(0.25f, 0.05f)),
       rodMesh_(primitives::cylinder(0.025f, 1.0f, 16)),
       armMesh_(primitives::box({0.5f, 0.04f, 0.04f})),
-      testTexture_("assets/textures/uv_teste.png") {
+      demoWood_(materials::wood()),
+      demoMetal_(materials::metal()),
+      demoPlastic_(materials::plastic()) {
     room_.addTo(root_, glm::mat4(1.0f));
+
+    lighting_.ambient = kAmbientLight;
+    lighting_.fill.direction = kFillDirection;
+    lighting_.fill.color = kFillColor;
 
     // Duas colunas, três fileiras: corredor central de 1,90 m e passo de 1,50 m entre fileiras.
     // No modelo real, +Z é o lado do ALUNO (porta-livros aberto), não a direção do olhar.
@@ -82,6 +121,12 @@ Classroom::Classroom()
     // O braço tem o pivô na base e centrado em x; deslocado 0,25 m para começar no pivô
     // em vez de atravessá-lo, e 0,02 m para baixo para o eixo do braço passar pelo pivô.
     joint.addChild(&armMesh_, glm::translate(glm::mat4(1.0f), glm::vec3(0.25f, -0.02f, 0.0f)));
+
+    // Materiais (CG-72): base de madeira, haste de metal e braço de plástico. O plástico fica na
+    // articulação (sem mesh) e o braço o herda; um filho novo da articulação também seria plástico.
+    base.material = &demoWood_;
+    rod.material = &demoMetal_;
+    joint.material = &demoPlastic_;
     targets_.push_back({"objeto articulado", &base, toWorld(demoPlacement, {1.2f, 1.4f, 2.0f}),
                         toWorld(demoPlacement, {0.1f, 0.6f, 0.0f})});  // tecla 3
 
@@ -102,6 +147,14 @@ Classroom::Classroom()
             const float x = kLampColumns[j];
             const glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, kCeilingHeight, z));
             const SceneNode& lamp = lamp_.addTo(root_, placement);
+            // Uma luz pontual por luminária, no ponto da luminária levado para o mundo.
+            PointLight light;
+            light.position = toWorld(placement, objects::Lamp::lightOrigin());
+            light.color = kLampLightColor;
+            light.constant = kLampConstant;
+            light.linear = kLampLinear;
+            light.quadratic = kLampQuadratic;
+            lighting_.pointLights.push_back(light);
             if (i == 0 && j == 0) {
                 targets_.push_back({"lâmpada", &lamp, toWorld(placement, {0.5f, -0.8f, 1.1f}),
                                     toWorld(placement, {0.0f, -0.04f, 0.0f})});  // tecla 5, de baixo
@@ -173,10 +226,35 @@ Classroom::Classroom()
     const SceneNode& board = board_.addTo(root_, boardPlacement);
     targets_.push_back({"quadro", &board, toWorld(boardPlacement, {0.85f, 0.65f, 3.10f}),
                         toWorld(boardPlacement, {0.0f, -0.03f, 0.04f})});  // 11º alvo, após a cadeira: [ e ]
+
+    // Estado inicial: sala acesa, com a tecla do interruptor já na posição "ligado" e os tubos brilhando.
+    // Depois das luminárias e do interruptor, que esta chamada altera.
+    setLightOn(true);
 }
 
-void Classroom::update(const Input& /*input*/, float /*deltaTime*/) {
-    // Interações (CG-73, CG-75, CG-76, CG-77) e animações entram aqui.
+void Classroom::update(const Input& input, float /*deltaTime*/) {
+    // keyPressed vale só no frame em que a tecla desce (borda): segurar L não fica piscando a luz.
+    if (input.keyPressed(GLFW_KEY_L)) {
+        setLightOn(!lightOn_);
+    }
+    // Interações (CG-75, CG-76, CG-77) e animações entram aqui.
+}
+
+void Classroom::setLightOn(bool on) {
+    lightOn_ = on;
+
+    // Única transformação da interação: a tecla bascula (rotação da articulação em torno do eixo X).
+    lightSwitch_.setOn(on);
+
+    // Luz desligada não é enviada ao shader (o renderer só manda as com enabled = true), então
+    // uPointLightCount vai de 4 a 0 e o laço das luzes pontuais do fragment shader não roda.
+    for (PointLight& light : lighting_.pointLights) {
+        light.enabled = on;
+    }
+
+    // O tubo aceso brilha sozinho (emissive); apagado, volta a ser vidro iluminado pela sala.
+    lamp_.setLit(on);
+    lighting_.ambient = on ? kAmbientLight : kAmbientLightOff;
 }
 
 bool Classroom::handleInspection(const Input& input, Camera& camera) {

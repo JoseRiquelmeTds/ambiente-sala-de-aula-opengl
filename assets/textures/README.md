@@ -16,7 +16,9 @@ Dicas:
 
 | Arquivo | Usado em | Origem | Autor | Licença |
 | --- | --- | --- | --- | --- |
-| `uv_teste.png` | Cena de exemplo (teste do carregador) | Gerada por script Python: R = u, G = v, xadrez 8×8 | Equipe | Própria (livre uso no projeto) |
+| `uv_teste.png` | Depuração de UV e de `Material::diffuseMap` (sem uso fixo na cena desde a CG-72) | Gerada por script Python: R = u, G = v, xadrez 8×8 | Equipe | Própria (livre uso no projeto) |
 | `lona_tela.png` | Lona da tela retrátil (CG-66; aplicada na CG-78) | Gerada por script Python: trama de 4 px e ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
 | `plastico_projetor.png` | Gabinete do projetor (CG-65; aplicada na CG-78) | Gerada por script Python: plástico cinza fosco, ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
 | `plastico_lixeira.png` | Lixeira (CG-67; aplicada na CG-78) | Gerada por script Python: polipropileno azul, ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
+| `laminado_carteira.png` | Tampo da carteira (CG-74) e, pelo `objects/furniture_style.hpp`, placas da cadeira | Gerada por script Python: laminado madeirado claro, veio na horizontal (u) com ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |
+| `madeira_mesa_professor.png` | Mesa do professor: tampo, painéis e gavetas (CG-74) | Gerada por script Python: madeira escura com veio marcado na horizontal (u), ruído periódico (seamless), 512×512 | Equipe | Própria (livre uso no projeto) |

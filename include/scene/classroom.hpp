@@ -6,9 +6,10 @@
 #include <string>
 #include <vector>
 
+#include "gfx/light.hpp"
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
-#include "gfx/texture.hpp"
 #include "objects/board.hpp"
 #include "objects/chair.hpp"
 #include "objects/student_desk.hpp"
@@ -48,6 +49,7 @@ public:
     Classroom& operator=(const Classroom&) = delete;
 
     // Teclas das interações e animações. Uma vez por frame, com a janela em foco.
+    // L: liga/desliga as luzes do teto (CG-73).
     void update(const Input& input, float deltaTime);
 
     // Tecla 1 mostra a sala inteira; 2 a 9 e 0 preservam os nove primeiros alvos.
@@ -62,10 +64,15 @@ public:
     static constexpr int kWholeScene = -1;
 
     const SceneNode& root() const { return root_; }
-    // Textura da cena inteira, até existir material por peça (CG-72).
-    const Texture& texture() const { return testTexture_; }
+    // Luzes da sala (CG-71): uma pontual por luminária, o preenchimento e a luz ambiente.
+    const Lighting& lighting() const { return lighting_; }
 
 private:
+    // Liga ou desliga as luzes do teto (CG-73): a tecla do interruptor, as 4 luzes pontuais, o
+    // brilho dos tubos e a parte da luz ambiente que vem das lâmpadas. Tudo de uma vez, sem animação,
+    // como um fluorescente real.
+    void setLightOn(bool on);
+
     struct InspectionTarget {
         std::string name;
         const SceneNode* node;  // filho direto de root_
@@ -73,13 +80,15 @@ private:
         glm::vec3 center;  // para onde olha
     };
 
-    // Membros na ordem de construção: meshes e textura antes da árvore, que aponta para eles
+    // Membros na ordem de construção: meshes e materiais antes da árvore, que aponta para eles
     // e é destruída primeiro.
     Mesh baseMesh_;
     Mesh rodMesh_;
     Mesh armMesh_;
-    // Vermelho cresce com u (para a direita) e verde com v (para cima). Verde embaixo = imagem invertida.
-    Texture testTexture_;
+    // Materiais do objeto articulado (CG-72): um preset em cada peça, para comparar lado a lado.
+    Material demoWood_;
+    Material demoMetal_;
+    Material demoPlastic_;
     objects::StudentDesk studentDesk_;
     objects::Fan fan_;
     objects::Lamp lamp_;
@@ -93,8 +102,10 @@ private:
     objects::Room room_;
 
     SceneNode root_;
+    Lighting lighting_;
     std::vector<InspectionTarget> targets_;
     int currentInspection_ = kWholeScene;
+    bool lightOn_ = true;  // luzes do teto (CG-73); a sala começa acesa
 };
 
 }  // namespace scene

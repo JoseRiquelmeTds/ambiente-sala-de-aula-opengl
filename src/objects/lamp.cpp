@@ -25,6 +25,17 @@ constexpr float kTubeRadius = 0.013f;
 constexpr float kTubeY = -0.040f;  // centro do tubo, abaixo do refletor
 constexpr float kTubeZ = 0.060f;   // tubos em z = -kTubeZ e +kTubeZ
 
+// Luz pontual (CG-71) 1,5 cm abaixo da abertura da calha, no meio dos dois tubos. Não fica
+// dentro do tubo porque o modelo de iluminação não tem emissão nem sombra: com a luz no centro
+// do tubo, as faces do próprio tubo e do refletor vistas de baixo ficariam de costas para ela
+// (N·L < 0) e escuras. Logo abaixo, tubos e refletor aparecem acesos.
+constexpr float kLightGap = 0.015f;
+
+// Brilho próprio do vidro aceso (CG-73), somado sem depender de luz nenhuma: com o ambiente, passa
+// de 1 e o tubo aparece branco, mesmo visto de lado ou de cima, onde nenhuma luz da cena o atinge.
+// Levemente azulado, como o fluorescente "luz do dia" das salas de aula.
+constexpr glm::vec3 kTubeLitEmissive(0.80f, 0.82f, 0.86f);
+
 // Soquete encostado na tampa lateral da calha, segurando a ponta do tubo.
 constexpr glm::vec3 kSocketSize(0.030f, 0.034f, 0.032f);
 constexpr float kSocketBottom = kTubeY - kSocketSize.y / 2.0f;  // centrado na altura do tubo
@@ -182,28 +193,64 @@ Lamp::Lamp()
     : body_(makeBody()),
       reflector_(makeReflector()),
       tube_(makeTube()),
-      socket_(primitives::box(kSocketSize, 0.05f)) {}
+      socket_(primitives::box(kSocketSize, 0.05f)),
+      // Chapa de aço com pintura epóxi branca: a tinta se comporta como plástico (reflexo branco), com brilho
+      // médio. Um pouco abaixo do branco puro para não estourar perto da luz.
+      paintedSheet_(materials::plastic(glm::vec3(0.86f, 0.86f, 0.84f))),
+      // Alumínio: difusa mais clara que a do aço e reflexo alto, mas menos concentrado que o de um espelho.
+      aluminum_(materials::metal(glm::vec3(0.55f, 0.55f, 0.57f))),
+      // Vidro com pó fluorescente por dentro: branco leitoso, levemente azulado, com o reflexo liso do vidro.
+      // emissive começa zerado (apagado); a CG-73 acende.
+      tubeGlass_(materials::plastic(glm::vec3(0.90f, 0.92f, 0.95f))),
+      // Soquete de policarbonato branco, um tom mais fosco que a chapa.
+      socketPlastic_(materials::plastic(glm::vec3(0.82f, 0.82f, 0.80f))) {
+    paintedSheet_.specular = glm::vec3(0.30f);
+    paintedSheet_.shininess = 24.0f;
+    aluminum_.specular = glm::vec3(0.85f);
+    aluminum_.shininess = 64.0f;
+    tubeGlass_.specular = glm::vec3(0.50f);
+    tubeGlass_.shininess = 64.0f;
+    socketPlastic_.specular = glm::vec3(0.25f);
+    socketPlastic_.shininess = 16.0f;
+}
+
+glm::vec3 Lamp::lightOrigin() {
+    return {0.0f, -(kBodyHeight + kLightGap), 0.0f};
+}
+
+void Lamp::setLit(bool lit) {
+    tubeGlass_.emissive = lit ? kTubeLitEmissive : glm::vec3(0.0f);
+}
 
 SceneNode& Lamp::addTo(SceneNode& parent, const glm::mat4& placement) const {
+    // Cada peça é filha direta da calha, então cada uma diz o seu material; a calha fica com a chapa pintada.
     SceneNode& root = parent.addChild(&body_, placement);
-    root.addChild(&reflector_);
+    root.material = &paintedSheet_;
+    root.addChild(&reflector_).material = &aluminum_;
     for (float sideZ : {-1.0f, 1.0f}) {
-        root.addChild(&tube_, tubePlacement(sideZ));
+        root.addChild(&tube_, tubePlacement(sideZ)).material = &tubeGlass_;
         for (float sideX : {-1.0f, 1.0f}) {
-            root.addChild(&socket_, socketPlacement(sideX, sideZ));
+            root.addChild(&socket_, socketPlacement(sideX, sideZ)).material = &socketPlastic_;
         }
     }
     return root;
 }
 
 LightSwitch::LightSwitch()
-    : plate_(makeBeveledPlate(kPlateSize, kPlateBevel, 0.08f)), key_(makeBeveledPlate(kKeySize, kKeyBevel, 0.08f)) {}
+    : plate_(makeBeveledPlate(kPlateSize, kPlateBevel, 0.08f)),
+      key_(makeBeveledPlate(kKeySize, kKeyBevel, 0.08f)),
+      // Plástico branco liso e brilhante (ABS/policarbonato): reflexo branco pequeno e nítido.
+      plastic_(materials::plastic(glm::vec3(0.88f, 0.88f, 0.86f))) {
+    plastic_.specular = glm::vec3(0.50f);
+    plastic_.shininess = 48.0f;
+}
 
 SceneNode& LightSwitch::addTo(SceneNode& parent, const glm::mat4& placement) {
     if (root_ != nullptr) {
         return *root_;
     }
     root_ = &parent.addChild(&plate_, placement);
+    root_->material = &plastic_;  // a articulação e a tecla herdam
     // A tecla nasce com as costas em z = 0 e centrada em X e Y, então o eixo do pivô passa pelo
     // meio dela: basta pendurá-la na articulação, sem deslocamento.
     keyJoint_ = &root_->addChild(nullptr, keyJointTransform(on_));

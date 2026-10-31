@@ -80,10 +80,12 @@ Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos pla
 | Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
 | `1` a `9`, `0` | Inspeção: cena completa / carteira / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
 | `[` / `]` | Alvo anterior / próximo, em ciclo pelos onze alvos: cadeira após a lixeira e quadro ao final |
+| `L` | Liga / desliga as luzes do teto, como o interruptor da parede (a sala começa acesa) |
 | `Esc` | Libera o cursor; com o cursor já livre, fecha |
 | `Q` | Fecha |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`) funciona mesmo assim.
+Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`) e a luz (`L`)
+funcionam mesmo assim.
 As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
 Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona o quadro. O ciclo retorna do último alvo ao primeiro
 e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
@@ -93,12 +95,14 @@ e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo
 A carteira (CG-62, `objects::StudentDesk`) tem tampo de MDF de 0,60 × 0,45 m a 0,75 m do chão, estrutura de tubo de
 aço de 22 mm, porta-livros de arame sob o tampo e ponteiras de plástico. Pivô no chão, no centro entre os pés, com a
 frente (+Z) para o lado do aluno. Tubo e espessura do tampo vêm de `objects/furniture_style.hpp`, compartilhado com a
-cadeira. As seis instâncias da montagem compartilham os meshes e usam a textura UV de teste até a CG-72.
+cadeira. As seis instâncias da montagem compartilham os meshes e os materiais (CG-74): tubo de aço com pintura
+grafite, tampo de laminado madeirado claro (`laminado_carteira.png`) e ponteiras de plástico preto. Os materiais do
+tubo e do laminado também ficam em `objects/furniture_style.hpp`, prontos para a cadeira.
 
 O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
 A origem local é a fixação na parede, com frente +Z. `Classroom` o fixa na parede esquerda, voltado para dentro;
 `objects::Fan::setRotorAngle(graus)` gira só pás e tampa, sem reconstruir geometria. A tecla `V` e a animação
-ficam para a CG-76. Até os materiais por peça (CG-72), ele usa a mesma textura UV provisória da cena;
+ficam para a CG-76. Até receber os próprios materiais, ele usa o material padrão (cinza claro fosco);
 grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
 
 A cadeira escolar (CG-60, décimo alvo, acessível por `[` e `]`) tem assento de 0,40 × 0,40 m com topo a 0,45 m,
@@ -109,7 +113,8 @@ sapatas e fixações discretas completam a estrutura. O pivô fica no chão entr
 das carteiras, olhando para -Z, com inspeção acompanhando o placement. A cadeira usa `objects::furniture::kTubeRadius`,
 `kTubeSegments` e `kBoardThickness` do header compartilhado `include/objects/furniture_style.hpp` da CG-62,
 sem duplicar constantes.
-Até a CG-72, permanece a textura UV provisória: metal cinza-escuro e madeira laminada serão materiais por peça.
+Até receber os próprios materiais, usa o material padrão (cinza claro fosco): metal cinza-escuro e madeira laminada
+serão materiais por peça.
 
 O quadro escolar (CG-61, `objects::Board`) tem moldura externa de 3,00 × 1,20 m, painel estrutural de 16 mm e
 superfície lisa de escrita de 2,95 × 1,15 m, com face frontal em Z local = 0,018 m e UV 0–1 sem espelhamento.
@@ -123,25 +128,29 @@ Moldura e cantos chegam a 0,022 e 0,024 m da parede: ficam pelo menos 14 mm atr�
 com acessórios, fica entre 0,896 e 0,930 m do chão, abaixo da barra e do puxador da tela aberta.
 O quadro é o 11º alvo, depois da cadeira: da cena completa, pressione `[`; da cadeira, `]`; da lixeira (`0`),
 duas vezes `]`. A inspeção isola o conjunto, sem a tela, em perspectiva levemente acima e à direita.
-Cada `addTo` cria uma raiz independente com meshes compartilhados e acessórios descendentes. Até a CG-72,
-usa a textura UV provisória; superfície, corpo, alumínio, bandeja, apagador/feltro e corpos/tampas dos marcadores
+Cada `addTo` cria uma raiz independente com meshes compartilhados e acessórios descendentes. Até receber os próprios
+materiais, usa o material padrão (cinza claro fosco); superfície, corpo, alumínio, bandeja, apagador/feltro e corpos/tampas dos marcadores
 estão separados para os futuros materiais por peça.
 
 A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubos T8 de 1,20 m, refletor em "W" e aletas;
 a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,
 origem no centro da face encostada na parede e frente +Z; `objects::LightSwitch::setOn(bool)` só inclina a tecla, sem
-reconstruir geometria. A tecla `L` e o acender da luz ficam para a CG-73. Até os materiais por peça (CG-72), os dois
-usam a textura UV provisória da cena; as luminárias encostam no teto e o interruptor fica na parede direita.
+reconstruir geometria. A tecla `L` (CG-73) apaga e acende as quatro luminárias: a tecla do interruptor bascula, as luzes
+pontuais desligam, os tubos param de brilhar e a luz ambiente cai, mas a luz de preenchimento continua iluminando a sala
+([docs/ILUMINACAO.md § 9](docs/ILUMINACAO.md#9-interação-ligar-a-luz)). Materiais (CG-74), só cor, sem textura:
+calha de chapa pintada de branco, refletor de alumínio, vidro leitoso do tubo e soquete de plástico; o interruptor é
+de plástico branco brilhante. As luminárias encostam no teto e o interruptor fica na parede direita.
 
 A mesa do professor (CG-64) tem tampo de 1,20 × 0,60 m a 0,75 m do chão, laterais e painel frontal de MDF e um
 gaveteiro de 3 gavetas fixas com puxadores. O pivô fica no chão, no centro da mesa; a frente (+Z, painel frontal) é o
-lado da turma e as gavetas abrem para o professor (-Z). A mesa fica na região frontal da sala. Até os materiais por peça
-(CG-72), usa a mesma textura UV da cena.
+lado da turma e as gavetas abrem para o professor (-Z). A mesa fica na região frontal da sala. Materiais (CG-74):
+madeira escura com veio (`madeira_mesa_professor.png`) no tampo, nos painéis e nas gavetas, puxadores de metal
+escovado e sapatas de plástico preto.
 A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede frontal.
 A origem local é o centro da face da caixa encostada na parede, com frente +Z.
 `objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a
-articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Até os materiais por peça (CG-72), ela usa
-a textura UV provisória da cena; a lona receberá `lona_tela.png`.
+articulação no topo da lona; a tecla `T` e a animação ficam para a CG-75. Até receber os próprios materiais, ela usa
+o material padrão (cinza claro fosco); a lona receberá `lona_tela.png`.
 
 O projetor (CG-65) fica preso ao teto a cerca de 2,9 m da tela, com corpo de 0,30 × 0,10 × 0,25 m e a lente como peça
 separada (a CG-77 dá brilho a ela). A origem local é o ponto de fixação no teto, com frente (lente) +Z.
@@ -151,8 +160,8 @@ gabinete receberá `plastico_projetor.png`.
 
 A lixeira (CG-67) é um tronco de cone oco de 0,30 m de diâmetro na boca e 0,40 m de altura, com parede de 6 mm e
 borda com espessura, no chão ao lado da região do quadro. Pivô no centro do fundo.
-O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Até os materiais por
-peça (CG-72), ela usa a textura UV provisória da cena; receberá `plastico_lixeira.png`.
+O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Até receber os próprios
+materiais, ela usa o material padrão (cinza claro fosco); receberá `plastico_lixeira.png`.
 
 ## Montagem da sala (CG-69)
 
@@ -160,7 +169,7 @@ peça (CG-72), ela usa a textura UV provisória da cena; receberá `plastico_lix
 O piso de 12 cm termina em Y = 0; o teto de 10 cm começa em Y = 3. As paredes de 10 cm crescem para fora
 do volume útil. Rodapés de 8 cm de altura dão acabamento. Piso, paredes, teto e rodapés têm meshes separados,
 normais externas aos sólidos (voltadas para a sala nas faces internas) e UVs físicas: repetição a cada 1 m
-nas superfícies principais e 0,5 m nos rodapés. A textura UV continua provisória (CG-72).
+nas superfícies principais e 0,5 m nos rodapés. Até receber os próprios materiais, usa o material padrão (cinza claro fosco).
 
 | Elemento | Pivô no mundo (m) | Orientação / quantidade |
 | --- | --- | --- |

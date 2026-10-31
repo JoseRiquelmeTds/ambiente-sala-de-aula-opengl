@@ -53,7 +53,9 @@ constexpr float kHandlePostRadius = 0.005f;
 constexpr float kHandleStandoff = 0.025f;  // distância da barra até a frente da gaveta, para caber os dedos
 
 // Tiling (docs/CONVENCOES.md § 3): metros cobertos por uma repetição da textura. Assim a textura não estica nas
-// peças finas (borda do tampo, rodapé).
+// peças finas (borda do tampo, rodapé). Com 0,6 m, o tampo de 1,20 m mostra a imagem 2 vezes no comprimento e 1 na
+// profundidade, com os veios na mesma largura nas duas direções. O veio corre em u (horizontal da imagem), que no
+// box() segue X nas faces de cima e da frente: acompanha o comprimento do tampo, do painel frontal e das gavetas.
 constexpr float kWoodTextureSize = 0.6f;
 constexpr float kSmallPartTextureSize = 0.1f;  // puxador (metal) e sapatas (plástico)
 
@@ -126,19 +128,34 @@ TeacherDesk::TeacherDesk()
       drawerFront_(primitives::box({kPedestalOpening - 2.0f * kDrawerGap, kDrawerFrontHeight, kPanelThickness},
                                    kWoodTextureSize)),
       handle_(makeHandle()),
-      foot_(primitives::box({kPanelThickness, kFootHeight, kFootLength}, kSmallPartTextureSize)) {}
+      foot_(primitives::box({kPanelThickness, kFootHeight, kFootLength}, kSmallPartTextureSize)),
+      woodTexture_("assets/textures/madeira_mesa_professor.png"),
+      // Branco: a cor vem toda da textura. Madeira envernizada: reflexo fraco e largo, um pouco acima do preset
+      // (0,06 e 12) por causa do verniz, mas sem brilho de espelho.
+      wood_(materials::wood(glm::vec3(1.0f))),
+      // Puxador de metal escovado (níquel acetinado): difusa mais clara que a do aço pintado e reflexo forte.
+      handleMetal_(materials::metal(glm::vec3(0.45f, 0.45f, 0.47f))),
+      footPlastic_(materials::plastic(glm::vec3(0.05f))) {
+    wood_.diffuseMap = &woodTexture_;  // ponteiro não dono: a textura é membro desta mesa
+    wood_.specular = glm::vec3(0.10f);
+    wood_.shininess = 20.0f;
+    footPlastic_.specular = glm::vec3(0.20f);
+    footPlastic_.shininess = 16.0f;
+}
 
 SceneNode& TeacherDesk::addTo(SceneNode& parent, const glm::mat4& placement) const {
-    // Raiz sem mesh: só carrega o placement, e as peças ficam relativas ao pivô da mesa.
+    // Raiz sem mesh: só carrega o placement, e as peças ficam relativas ao pivô da mesa. A madeira fica na raiz e
+    // vale para tampo, painéis e gavetas; puxadores e sapatas sobrescrevem.
     SceneNode& root = parent.addChild(nullptr, placement);
+    root.material = &wood_;
     root.addChild(&top_, translated({0.0f, kTopY, 0.0f}));
     root.addChild(&body_);
 
     // Uma sapata em cada ponta das 3 laterais. O mesmo mesh, só transladado.
     const float footZ = kPanelDepth / 2.0f - kFootLength / 2.0f;
     for (float x : {-kSideX, kPedestalInnerX, kSideX}) {
-        root.addChild(&foot_, translated({x, 0.0f, -footZ}));
-        root.addChild(&foot_, translated({x, 0.0f, footZ}));
+        root.addChild(&foot_, translated({x, 0.0f, -footZ})).material = &footPlastic_;
+        root.addChild(&foot_, translated({x, 0.0f, footZ})).material = &footPlastic_;
     }
 
     // Gavetas embutidas entre as laterais do gaveteiro, rente à borda -Z. Model = T · R: a gaveta é modelada com a
@@ -149,7 +166,9 @@ SceneNode& TeacherDesk::addTo(SceneNode& parent, const glm::mat4& placement) con
         glm::mat4 drawer = translated({kPedestalCenterX, y, -kPanelDepth / 2.0f + kPanelThickness / 2.0f});
         drawer = glm::rotate(drawer, glm::radians(180.0f), {0.0f, 1.0f, 0.0f});
         SceneNode& front = root.addChild(&drawerFront_, drawer);
-        front.addChild(&handle_, translated({0.0f, kDrawerFrontHeight / 2.0f, kPanelThickness / 2.0f}));
+        SceneNode& handle =
+            front.addChild(&handle_, translated({0.0f, kDrawerFrontHeight / 2.0f, kPanelThickness / 2.0f}));
+        handle.material = &handleMetal_;
     }
     return root;
 }
