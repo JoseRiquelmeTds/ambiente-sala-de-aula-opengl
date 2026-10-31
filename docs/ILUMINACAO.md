@@ -412,8 +412,9 @@ mundo --V_proj--> projetor --P_proj--> clip (x, y, z, w) --÷w--> NDC [-1, 1] --
   (0,5; 0,5), o centro do slide.
 - **w ≤ 0:** o ponto está atrás da lente (w é a profundidade na frente do projetor). A divisão inverteria o sinal
   de x e y e projetaria o slide espelhado nas costas do projetor; esses fragmentos não recebem nada.
-- **UV fora de 0..1:** fora do frustum do projetor (fora do cone de luz). Não recebem nada. O slide usa
-  `ClampToEdge`, para a borda não "vazar" pelo lado oposto no filtro linear.
+- **NDC fora de [-1, 1]:** fora do frustum do projetor. Em x e y é fora da imagem (fora do cone de luz); em z é
+  antes do near (0,1 m) ou depois do far (10 m). Não recebem nada. O slide usa `ClampToEdge`, para a borda não
+  "vazar" pelo lado oposto no filtro linear.
 
 ### Ângulo de abertura pelo throw ratio
 
@@ -452,7 +453,9 @@ projetor = albedo · slide(u, v) · cor · max(N·L, 0) · (d_ref / d)²
   projetor (o verso da lona) não recebe imagem.
 - **(d_ref / d)²:** a mesma luz se espalha por uma área que cresce com o quadrado da distância. Com `d_ref` = a
   distância até o centro da lona, o fator é 1 ali e `cor` (0,90; 0,90; 0,85) é a força do feixe na tela. Não há
-  termo constante nem linear como nas lâmpadas: o feixe é concentrado e não há luz rebatida a imitar.
+  termo constante nem linear como nas lâmpadas: o feixe é concentrado e não há luz rebatida a imitar. `d` tem um
+  mínimo de `kEpsilon` (1e-4), como nas lâmpadas: com o fragmento em cima da lente, `L = toLens / d` e `1 / d²`
+  dividiriam por zero. O near já descarta esses pontos; o mínimo protege se ele mudar.
 - **Sem especular:** a lona é fosca, e o reflexo de uma lente pequena seria um ponto. O termo é somado em `shade()`
   sem mudar nenhum dos outros.
 

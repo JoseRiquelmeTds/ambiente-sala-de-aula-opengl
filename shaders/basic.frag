@@ -106,12 +106,16 @@ vec3 projectorLight(vec3 N, vec3 albedo) {
     if (clip.w <= 0.0) {
         return vec3(0.0);  // atrás da lente: a divisão inverteria o sinal (slide espelhado nas costas)
     }
-    vec2 uv = clip.xy / clip.w * 0.5 + 0.5;  // NDC [-1, 1] -> UV [0, 1]
-    if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) {
-        return vec3(0.0);  // fora do frustum do projetor
+    vec3 ndc = clip.xyz / clip.w;
+    if (any(lessThan(ndc, vec3(-1.0))) || any(greaterThan(ndc, vec3(1.0)))) {
+        // Fora do frustum do projetor: X/Y fora da imagem, ou Z antes do near / depois do far.
+        return vec3(0.0);
     }
+    vec2 uv = ndc.xy * 0.5 + 0.5;  // NDC [-1, 1] -> UV [0, 1]
     vec3 toLens = uProjector.position - vWorldPos;
-    float d = length(toLens);
+    // Fragmento em cima da lente (d = 0) daria divisão por zero em toLens / d e em 1 / d²: o mínimo
+    // evita. Na prática o near já descarta esse ponto; a proteção vale se o near mudar.
+    float d = max(length(toLens), kEpsilon);
     float lambert = max(dot(N, toLens / d), 0.0);
     float falloff = (uProjector.referenceDistance * uProjector.referenceDistance) / (d * d);
     return albedo * texture(uProjector.image, uv).rgb * uProjector.color * lambert * falloff;
