@@ -65,7 +65,7 @@ public:
     static constexpr int kWholeScene = -1;
 
     const SceneNode& root() const { return root_; }
-    // Luzes da sala (CG-71): uma pontual por luminária, a janela e a luz ambiente.
+    // Luzes da sala (CG-71): uma pontual por luminária, o preenchimento e a luz ambiente.
     const Lighting& lighting() const { return lighting_; }
 
 private:
