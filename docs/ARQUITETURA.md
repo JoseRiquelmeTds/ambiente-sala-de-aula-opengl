@@ -387,7 +387,7 @@ como CG-71/CG-72, e interações continuam em `Classroom::update` nas tasks corr
 
 ### Iluminação (CG-71)
 
-Blinn-Phong por fragmento em `shaders/basic.frag`: ambiente, uma luz direcional de janela e até quatro luzes
+Blinn-Phong por fragmento em `shaders/basic.frag`: ambiente, uma luz direcional de preenchimento e até quatro luzes
 pontuais com atenuação, uma por luminária. `scene/classroom` monta as luzes (`Lighting`, `gfx/light.hpp`) e as expõe
 em `lighting()`; `renderer::draw` só as envia como uniforms, sem saber de onde vêm. A normal matrix é calculada na CPU
 por peça. Técnica, fórmulas e valores: [ILUMINACAO.md](ILUMINACAO.md).

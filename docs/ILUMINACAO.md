@@ -9,7 +9,7 @@ cada coisa fica no código: [§ 6](#6-onde-está-no-código). Para aplicar mater
 
 1. [Modelo de Blinn-Phong](#1-modelo-de-blinn-phong)
 2. [Luzes pontuais e atenuação](#2-luzes-pontuais-e-atenuação)
-3. [Luz ambiente e luz da janela](#3-luz-ambiente-e-luz-da-janela)
+3. [Luz ambiente e luz de preenchimento](#3-luz-ambiente-e-luz-de-preenchimento)
 4. [Matriz das normais](#4-matriz-das-normais)
 5. [Valores escolhidos](#5-valores-escolhidos)
 6. [Onde está no código](#6-onde-está-no-código)
@@ -62,6 +62,14 @@ espelhado na superfície. Blinn troca R·V por N·H:
 
 Para o reflexo ter o mesmo tamanho, o expoente do Blinn costuma ser de 2 a 4 vezes o do Phong.
 
+**Divisões protegidas.** Normalizar é dividir o vetor pelo próprio comprimento, então um vetor nulo daria divisão por
+zero (resultado `NaN`, pixel com cor indefinida). Dois casos são tratados com um epsilon (`kEpsilon = 1e-4`):
+
+- **Distância até a luz pontual:** `d = max(length(toLight), kEpsilon)` antes de `toLight / d`, para o caso de um
+  fragmento coincidir com a posição da luz.
+- **Half-vector:** se `L + V` for nulo (luz exatamente atrás da superfície e câmera de frente, em sentidos opostos),
+  não há reflexo para a câmera: o especular fica 0 em vez de normalizar o vetor nulo.
+
 ## 2. Luzes pontuais e atenuação
 
 Cada uma das quatro luminárias de teto tem uma luz pontual: sai de um ponto para todos os lados, então L muda em cada
@@ -97,15 +105,15 @@ lâmpada é (0,55; 0,53; 0,50), pouco mais de metade do branco; com 1,0 o piso e
 Uma luz com `enabled = false` não é enviada ao shader: o renderer monta o array só com as ligadas e envia a quantidade
 em `uPointLightCount`. É o que a tecla `L` (CG-73) usa para apagar as lâmpadas ([§ 9](#9-interação-ligar-a-luz)).
 
-## 3. Luz ambiente e luz da janela
+## 3. Luz ambiente e luz de preenchimento
 
 - **Ambiente (0,25; 0,25; 0,26):** garante que nenhuma face fique preta. Uma face de costas para todas as luzes
   mostra 25% da própria cor. Mais que isso, a sala fica "lavada" (todas as faces com a mesma claridade, sem volume).
-- **Janela (direcional):** luz de muito longe (o sol), com todos os raios paralelos: L é a mesma em toda a cena e não
-  há atenuação. As janelas ficam na parede esquerda (-X), à esquerda de quem olha para o quadro, como se recomenda em
-  sala de aula (a mão de quem escreve com a direita não faz sombra no caderno). A luz viaja para +X e desce
-  (direção (1; -0,6; 0,15)), fraca e levemente azulada (0,16; 0,17; 0,19). Ela só **preenche**: dá volume às faces
-  voltadas para a esquerda, que as lâmpadas iluminam de lado.
+- **Preenchimento (direcional):** representa a claridade do dia, uma luz de muito longe com todos os raios
+  paralelos: L é a mesma em toda a cena e não há atenuação. A sala não tem janela modelada, então essa luz não sai de
+  nenhum objeto da cena; ela só vem do lado esquerdo (-X) de quem olha para o quadro, onde as salas costumam ter
+  janelas. A luz viaja para +X e desce (direção (1; -0,6; 0,15)), fraca e levemente azulada (0,16; 0,17; 0,19). Ela só
+  **preenche**: dá volume às faces voltadas para a esquerda, que as lâmpadas iluminam de lado.
 
 ## 4. Matriz das normais
 
@@ -151,7 +159,7 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Atenuação | kc = 1; kl = 0,14; kq = 0,07 | `kLampConstant`, `kLampLinear`, `kLampQuadratic` |
 | Ambiente | (0,25; 0,25; 0,26); com a luz apagada, (0,20; 0,21; 0,23) | `kAmbientLight`, `kAmbientLightOff` |
 | Brilho do tubo aceso | emissiva (0,80; 0,82; 0,86) | `kTubeLitEmissive` (`objects/lamp.cpp`) |
-| Janela | direção (1; -0,6; 0,15), cor (0,16; 0,17; 0,19) | `kWindowDirection`, `kWindowColor` |
+| Preenchimento | direção (1; -0,6; 0,15), cor (0,16; 0,17; 0,19) | `kFillDirection`, `kFillColor` |
 | Especular / brilho | por peça, no material ([§ 7](#7-materiais)) | `gfx/material.cpp` |
 
 ## 6. Onde está no código
@@ -159,9 +167,9 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Parte | Arquivo |
 | --- | --- |
 | Structs `PointLight`, `DirectionalLight`, `Lighting` | `include/gfx/light.hpp` |
-| Luzes da sala (posição, cor, atenuação, ambiente, janela) | `src/scene/classroom.cpp` (`Classroom::lighting()`) |
+| Luzes da sala (posição, cor, atenuação, ambiente, preenchimento) | `src/scene/classroom.cpp` (`Classroom::lighting()`) |
 | Ponto da luz na luminária | `Lamp::lightOrigin()` em `src/objects/lamp.cpp` |
-| Envio dos uniforms (`uViewPos`, `uAmbient`, `uWindowLight`, `uPointLights[]`, `uPointLightCount`) | `src/gfx/renderer.cpp` |
+| Envio dos uniforms (`uViewPos`, `uAmbient`, `uFillLight`, `uPointLights[]`, `uPointLightCount`) | `src/gfx/renderer.cpp` |
 | Normal matrix (`uNormalMatrix`) | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
 | Normal para o mundo | `shaders/basic.vert` |
 | Blinn-Phong, atenuação, modos de depuração | `shaders/basic.frag` (`blinnPhong`, `shade`, `albedo`) |
@@ -240,7 +248,7 @@ branco (a cor vem da imagem). O tiling vem do `textureSize` das primitivas (UV e
 - **Veio na direção do comprimento:** as imagens têm o veio na horizontal (eixo u), e no `box()` u segue X nas faces
   de cima e da frente, que é o comprimento do tampo, do painel frontal e das gavetas.
 - **Nada estourando:** os brancos (calha, soquete, vidro, interruptor) ficam entre 0,82 e 0,90, não 1,0: somando
-  ambiente, janela e luminárias, um branco puro passaria de 1 nas faces de frente para a luz, e o OpenGL cortaria em
+  ambiente, preenchimento e luminárias, um branco puro passaria de 1 nas faces de frente para a luz, e o OpenGL cortaria em
   branco chapado, sem volume.
 
 ### Materiais aplicados (CG-78: tela retrátil, projetor e lixeira)
@@ -359,10 +367,10 @@ O que muda em cada chamada:
   articulação em torno do eixo do basculamento (`T(pivô) · R(±7°)`), como uma tecla real.
 - **Os tubos acendem juntos** porque as quatro luminárias apontam para o **mesmo** `Material` do vidro (membro da
   `Lamp`): mudar o `emissive` uma vez muda as quatro. O mesmo vale para a luz de cada uma, que é da `Classroom`.
-- **A sala não fica preta.** É uma sala de dia: a janela continua acesa, e a luz ambiente não vai a zero. Parte
-  do ambiente é a luz das lâmpadas rebatida nas paredes; apagadas, sobra só o que a janela rebate. Por isso o
+- **A sala não fica preta.** É uma sala de dia: o preenchimento continua aceso, e a luz ambiente não vai a zero. Parte
+  do ambiente é a luz das lâmpadas rebatida nas paredes; apagadas, sobra só a claridade do dia rebatida. Por isso o
   ambiente cai para cerca de 80% e puxa para o azul do dia, em vez de sumir. Na vista inicial, a claridade média da
-  imagem cai de ~140 para ~45 (de 255): bem mais escura, mas sem nenhuma face preta, e as faces voltadas para a janela
+  imagem cai de ~140 para ~45 (de 255): bem mais escura, mas sem nenhuma face preta, e as faces voltadas para a esquerda (-X)
   continuam mais claras que as outras.
 - **Por que o tubo precisa de emissiva:** a luz pontual fica abaixo dos tubos, então ela ilumina a parte de baixo do
   vidro, mas o modelo não tem nada que faça uma superfície parecer uma fonte de luz. A emissiva soma uma cor fixa,
