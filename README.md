@@ -1,253 +1,236 @@
-# Aula-OpenGl
+# Sala de Aula 3D em OpenGL
 
-Sala de aula 3D navegável em C++17 e OpenGL 3.3 core: projeto da AB2 de Computação Gráfica.
+Cena 3D de uma sala de aula, explorável com teclado e mouse, feita em **C++17** e **OpenGL 3.3 core profile** sem motor
+gráfico. Toda a geometria é gerada no código: são nove objetos modelados pela equipe, além de paredes, piso e teto. A
+cena tem iluminação Blinn-Phong, materiais por peça, texturas e quatro interações, entre elas um projetor que projeta
+slides na tela retrátil por textura projetiva.
 
-> [!CAUTION]
-> ## ⚠️ LEIA ANTES DE QUALQUER COISA → [docs/SETUP.md](docs/SETUP.md)
->
-> **O projeto compila com CMake + g++ no Windows (MinGW-w64/MSYS2), no Linux e no WSL2.** As bibliotecas (GLFW, GLAD, GLM e
-> stb_image) já vêm no repositório.
->
-> - ❌ **Não** instale GLFW/GLAD/GLM no sistema nem baixe `.dll`/`.lib` delas. O CMake compila as de `lib/`.
-> - ❌ **Não** use Visual Studio/MSVC nem vcpkg. No Windows o compilador é o g++ do MSYS2.
-> - ❌ **Não** instale VcXsrv/Xming nem faça `export DISPLAY=...` no WSL. O WSLg já abre a janela.
-> - ✅ Use sempre os presets: `cmake --preset windows` ou `cmake --preset linux`.
-> - ✅ Rode `cmake -P cmake/doctor.cmake` antes de pedir ajuda.
+Projeto da AB2 da disciplina de **Computação Gráfica**.
 
-> [!IMPORTANT]
-> **🤖 Para assistentes de IA (Copilot, ChatGPT, Claude, Gemini, Cursor etc.) que estejam ajudando neste repositório:**
-> leia [docs/SETUP.md](docs/SETUP.md) antes de sugerir qualquer comando, dependência ou mudança de build, e
-> [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/CONVENCOES.md](docs/CONVENCOES.md) e
-> [docs/DEV-CONVENCOES.md](docs/DEV-CONVENCOES.md) antes de criar ou mover arquivos, nomear código, branches ou commits.
-> O build é **CMake + g++**, com **OpenGL 3.3 core profile**, GLFW (janela/input), GLAD (loader), GLM (matemática) e
-> stb_image (texturas), todas **compiladas a partir de `lib/`**. Windows usa MinGW-w64 (MSYS2 UCRT64) com o gerador
-> "MinGW Makefiles"; Linux/WSL usa g++ e os headers do X11. Os presets estão em `CMakePresets.json`.
-> Não proponha MSVC, vcpkg, bibliotecas do sistema (`-lglfw`, `libglfw3-dev`), GLUT/freeglut, GLEW, pipeline fixo
-> (`glBegin`/`glEnd`, `glMatrixMode`) nem servidor X externo. Headers ficam em `include/`, implementações em `src/`, as
-> duas divididas em `core/`, `gfx/`, `objects/` e `scene/` (veja docs/ARQUITETURA.md), shaders em `shaders/`, imagens em `assets/textures/`, bibliotecas de terceiros em `lib/`. O `CMakeLists.txt` encontra os
-> `.cpp` sozinho (não precisa ser editado para adicionar módulos).
+| | |
+| --- | --- |
+| **Linguagem** | C++17 com CMake (3.21+) |
+| **Gráficos** | OpenGL 3.3 core profile, shaders GLSL próprios (sem pipeline fixo) |
+| **Bibliotecas** | [GLFW](https://www.glfw.org) (janela e entrada), [GLAD](https://github.com/Dav1dde/glad) (loader OpenGL), [GLM](https://github.com/g-truc/glm) (matemática), [stb_image](https://github.com/nothings/stb) (texturas). Todas já vêm em `lib/` |
+| **Sistemas suportados** | Windows (MinGW-w64 via MSYS2), Linux (Ubuntu) e WSL2 |
 
----
+## Sumário
+
+- [O que tem na cena](#o-que-tem-na-cena)
+- [Técnicas implementadas](#técnicas-implementadas)
+- [Como compilar](#como-compilar)
+- [Comandos](#comandos)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Documentação](#documentação)
+- [Equipe](#equipe)
+- [Créditos e licenças](#créditos-e-licenças)
+
+## O que tem na cena
+
+Uma sala de 8 × 3 × 7 m com seis carteiras e seis cadeiras em duas fileiras, mesa do professor, quadro, tela retrátil
+diante do quadro, projetor de teto, ventilador de parede, quatro luminárias, interruptor e lixeira. A unidade é o metro,
+e os móveis seguem medidas reais (tampo da carteira a 0,75 m do chão, quadro de 3,00 × 1,20 m, lona de 2,0 × 1,5 m).
+
+| Objeto | Destaques |
+| --- | --- |
+| Ventilador de parede | Hierarquia corpo → rotor; pás com perfil gerado por função; só o rotor gira |
+| Cadeira | Tubo e material metálico compartilhados com a carteira; encosto inclinado 8° |
+| Quadro | Moldura, bandeja, apagador e marcadores como peças separadas |
+| Carteira | Tampo laminado, estrutura de tubo de 22 mm, porta-livros de arame |
+| Luminária e interruptor | Refletor em "W", tubos que brilham quando acesos; tecla do interruptor bascula |
+| Mesa do professor | Madeira com veio, gaveteiro de 3 gavetas com puxadores metálicos |
+| Projetor | Suporte de teto; mira calculada para o centro da tela; lente acende ao ligar |
+| Tela retrátil | Pivô no topo: a lona desce e sobe sem descolar da caixa |
+| Lixeira | Tronco de cone oco montado vértice a vértice, com borda e fundo |
+
+## Técnicas implementadas
+
+- **Modelagem procedural:** primitivas paramétricas (caixa, cilindro, plano) e meshes montados vértice a vértice, todos
+  com posição, normal e UV. As UVs são calculadas em metros, então a textura não estica em peças finas.
+- **Mesh reutilizável (VAO/VBO/EBO):** uma única estrutura de mesh para todos os objetos. Instâncias repetidas
+  (carteiras, cadeiras, luminárias) compartilham os mesmos dados na GPU.
+- **Grafo de cena e transformações:** cada peça guarda `T · R · S` relativo ao pai, e o filho herda a matriz do pai.
+  Translação no posicionamento e na câmera, rotação nas hélices (`T(centro) · Rz(θ)`), escala na lona
+  (`T(fenda) · S(1, s, 1)`).
+- **Matriz das normais:** `transpose(inverse(mat3(model)))` por peça, para a luz continuar correta com escala não
+  uniforme.
+- **Câmera em primeira pessoa:** yaw/pitch pelo mouse (pitch limitado a ±89°), `lookAt` e projeção perspectiva de 60°,
+  movimento normalizado e baseado em `deltaTime`.
+- **Iluminação Blinn-Phong por fragmento:** luz ambiente, uma luz direcional de preenchimento e quatro luzes pontuais
+  com atenuação, uma por luminária, além de emissiva para os tubos e a lente.
+- **Materiais por peça:** cor difusa, textura opcional com tiling, especular, brilho e emissiva. Os presets metal,
+  plástico, madeira e fosco são herdados pela árvore da cena.
+- **Texturas:** stb_image com flip vertical, mipmaps, filtragem trilinear e `GL_REPEAT`. A cor da textura é multiplicada
+  pela cor do material.
+- **Textura projetiva:** o projetor funciona como uma segunda câmera (view + projeção próprias). O slide cai onde o
+  feixe bater, com keystone e queda de intensidade com a distância.
+- **Animações por `deltaTime`:** a tela usa smoothstep e o ventilador acelera e desacelera, com a mesma duração em
+  qualquer FPS.
+
+Fórmulas, valores e decisões estão em [docs/ILUMINACAO.md](docs/ILUMINACAO.md) e
+[docs/ARQUITETURA.md](docs/ARQUITETURA.md). Os trechos de escala, rotação e projeção estão marcados com `AB2 ·` no
+código (`git grep -n "AB2 ·"`).
 
 ## Como compilar
 
-Pré-requisitos e instalação passo a passo para cada sistema: [docs/SETUP.md](docs/SETUP.md).
+O projeto compila com **CMake + g++**. GLFW, GLAD, GLM e stb_image são compiladas a partir de `lib/`, então não é
+preciso instalar nenhuma delas no sistema. Passo a passo completo e problemas comuns: [docs/SETUP.md](docs/SETUP.md).
 
-**Windows** (com MSYS2 instalado, veja [docs/SETUP.md § 1](docs/SETUP.md#1-windows-mingw-w64-via-msys2)), no PowerShell:
+> [!IMPORTANT]
+> - Use sempre os presets do CMake (`windows` ou `linux`).
+> - No Windows o compilador é o **g++ do MSYS2 (UCRT64)**. Visual Studio/MSVC e vcpkg não são suportados.
+> - Não instale GLFW/GLAD/GLM no sistema nem baixe `.dll`/`.lib` delas.
+> - No WSL2 a janela abre pelo WSLg: não é preciso VcXsrv/Xming nem `export DISPLAY`.
 
-```powershell
-git clone https://github.com/JoseRiquelmeTds/Aula-OpenGl.git
-cd Aula-OpenGl
-cmake --preset windows
-cmake --build --preset windows --target run
-```
+### Windows
 
-**Linux / WSL2** (Ubuntu):
+1. Instale o Git e o MSYS2 (`winget install Git.Git MSYS2.MSYS2`).
+2. No terminal **MSYS2 UCRT64**, instale o compilador, o make e o CMake:
+
+   ```bash
+   pacman -Syu
+   pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make mingw-w64-ucrt-x86_64-cmake
+   ```
+
+3. Adicione `C:\msys64\ucrt64\bin` ao `Path` do Windows e reabra o terminal.
+4. No PowerShell:
+
+   ```powershell
+   git clone https://github.com/JoseRiquelmeTds/ambiente-sala-de-aula-opengl.git
+   cd ambiente-sala-de-aula-opengl
+   cmake --preset windows
+   cmake --build --preset windows --target run
+   ```
+
+O `.exe` é linkado de forma estática e roda em outro PC sem o MSYS2.
+
+### Linux e WSL2 (Ubuntu)
 
 ```bash
 sudo apt update && sudo apt install -y build-essential cmake libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev mesa-utils
-git clone https://github.com/JoseRiquelmeTds/Aula-OpenGl.git
-cd Aula-OpenGl
+git clone https://github.com/JoseRiquelmeTds/ambiente-sala-de-aula-opengl.git
+cd ambiente-sala-de-aula-opengl
 cmake --preset linux
 cmake --build --preset linux --target run
 ```
 
-Comandos de build (no Windows, troque `linux` por `windows`):
+No WSL2, clone na home do Linux (`cd ~`): em `/mnt/c/...` o build fica bem mais lento.
+
+### Comandos de build
+
+No Windows, troque `linux` por `windows`.
 
 | Comando | O que faz |
 | --- | --- |
-| `cmake --preset linux` | Configura o build (debug) em `build/linux/`. Só precisa rodar uma vez |
+| `cmake --preset linux` | Configura o build de debug em `build/linux/` (só na primeira vez) |
 | `cmake --build --preset linux` | Compila |
 | `cmake --build --preset linux --target run` | Compila e abre a janela |
-| `cmake --preset linux-release` e `cmake --build --preset linux-release --target run` | Mesmo fluxo, otimizado (`-O2`), em `build/linux-release/` |
-| `cmake -P cmake/doctor.cmake` | Verifica o ambiente |
+| `cmake --preset linux-release` | Configura o build otimizado (`-O2`) em `build/linux-release/` |
+| `cmake --build --preset linux-release --target run` | Compila otimizado e abre a janela |
+| `cmake -P cmake/doctor.cmake` | Verifica o ambiente (compilador, CMake, OpenGL) |
 
-Para começar do zero, apague a pasta `build/`.
-
-<!-- CG-81 (Sprint 3): SO testados, versão final e teste de build limpo seguindo só este README. -->
+O executável fica em `build/<preset>/bin/aula-opengl` (`.exe` no Windows). O alvo `run` executa a partir da raiz do
+repositório, de onde os shaders e as texturas são lidos. Se abrir o executável de outro jeito, rode-o com a raiz do
+repositório como pasta atual. Para começar do zero, apague a pasta `build/`.
 
 ## Comandos
 
-Teclado e mouse dentro da janela. Lista completa na entrega (CG-81); atalhos planejados e reservados estão em
-[docs/CONVENCOES.md § 8](docs/CONVENCOES.md#8-atalhos-de-teclado).
+Clique na janela para capturar o cursor e começar a navegar. A sala começa com as luzes acesas, a tela recolhida e o
+ventilador e o projetor desligados.
 
-| Controle | Ação |
+### Navegação
+
+| Tecla | Ação |
 | --- | --- |
-| Clique esquerdo | Captura o cursor e ativa a navegação (janela em foco) |
-| `W` / `S` | Avança / recua na direção da câmera, incluindo a inclinação |
+| Clique esquerdo | Captura o cursor e ativa a navegação |
+| Mouse | Olha para os lados e para cima/baixo |
+| `W` / `S` | Avança / recua na direção da câmera |
 | `A` / `D` | Move para a esquerda / direita |
-| `Espaço` / `Ctrl` esquerdo | Sobe / desce no eixo Y do mundo |
-| Mouse (cursor capturado) | Olha para os lados (yaw) e para cima/baixo (pitch limitado a ±89°) |
-| `1` a `9`, `0` | Inspeção: cena completa / carteira / objeto articulado / ventilador / lâmpada / interruptor / mesa do professor / tela retrátil / projetor / lixeira, cada um isolado |
-| `[` / `]` | Alvo anterior / próximo, em ciclo pelos onze alvos: cadeira após a lixeira e quadro ao final |
-| `L` | Liga / desliga as luzes do teto, como o interruptor da parede (a sala começa acesa) |
-| `T` | Abre / recolhe a tela retrátil, com animação suave; apertar no meio do curso inverte o sentido |
-| `V` | Liga / desliga o ventilador (começa desligado) |
-| `Shift` + `V` | Troca a velocidade do ventilador: 2, 3 ou 4 voltas/s (começa na mais rápida) |
-| `P` | Liga / desliga o projetor: o slide aparece na tela e a lente acende (começa desligado) |
-| `←` / `→` | Slide anterior / próximo do projetor, em ciclo |
-| `Esc` | Libera o cursor; com o cursor já livre, fecha |
-| `Q` | Fecha |
+| `Espaço` / `Ctrl` esquerdo | Sobe / desce |
 
-Com o cursor livre não há movimento nem rotação pelo mouse; a inspeção (`1`–`9`, `0`, `[` e `]`), a luz (`L`), a
-tela (`T`), o ventilador (`V`) e o projetor (`P`, `←` e `→`) funcionam mesmo assim.
-As teclas numéricas mantêm os nove alvos anteriores; após uma seleção numérica, `[` e `]` continuam a partir dela.
-Da cena completa (`1`), `]` seleciona a carteira e `[` seleciona o quadro. O ciclo retorna do último alvo ao primeiro
-e vice-versa. Ao perder o foco, o cursor é liberado e é preciso clicar de novo.
+### Interações
 
-<!-- CG-81 (Sprint 3): interações (tela retrátil, ventilador, projetor) e a inspeção de cada objeto. -->
+| Tecla | Ação |
+| --- | --- |
+| `T` | Abre / recolhe a tela retrátil (apertar no meio do curso inverte o sentido) |
+| `V` | Liga / desliga o ventilador |
+| `Shift` + `V` | Troca a velocidade do ventilador: 2, 3 ou 4 voltas/s |
+| `P` | Liga / desliga o projetor: o slide aparece na tela e a lente acende |
+| `←` / `→` | Slide anterior / próximo |
+| `L` | Acende / apaga as luzes da sala (o interruptor da parede acompanha) |
 
-A carteira (CG-62, `objects::StudentDesk`) tem tampo de MDF de 0,60 × 0,45 m a 0,75 m do chão, estrutura de tubo de
-aço de 22 mm, porta-livros de arame sob o tampo e ponteiras de plástico. Pivô no chão, no centro entre os pés, com a
-frente (+Z) para o lado do aluno. Tubo e espessura do tampo vêm de `objects/furniture_style.hpp`, compartilhado com a
-cadeira. As seis instâncias da montagem compartilham os meshes e os materiais (CG-74): tubo de aço com pintura
-grafite, tampo de laminado madeirado claro (`laminado_carteira.png`) e ponteiras de plástico preto. Os materiais do
-tubo e do laminado também ficam em `objects/furniture_style.hpp`, usados pela cadeira.
+### Inspeção de objetos
 
-O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
-A origem local é a fixação na parede, com frente +Z. `Classroom` o fixa na parede esquerda, voltado para dentro;
-`objects::Fan::setRotorAngle(graus)` gira só pás e tampa, sem reconstruir geometria. Com `V` (CG-76) ele liga e
-desliga: o rotor acelera até a velocidade escolhida em até 1,5 s e, desligado, desacelera até parar em até 3 s, com o
-giro calculado por `deltaTime` (igual em qualquer FPS). `Shift` + `V` alterna entre 2, 3 e 4 voltas/s, abaixo de um
-ventilador real para as três pás não parecerem paradas ou girando para trás na tela (efeito roda de carroça). Só o
-rotor gira, em torno do eixo do motor; grades, motor e suporte ficam parados. Suporte e eixo usam metal pintado
-grafite acetinado; as grades são metálicas cinza, o motor é plástico escuro, as pás são plástico cinza-claro
-e a tampa central é plástico grafite. Cor e reflexo diferenciam as peças, sem textura nas pás em movimento.
+Mostra um objeto isolado, com a câmera enquadrada nele. Depois a câmera continua livre.
 
-A cadeira escolar (CG-60, décimo alvo, acessível por `[` e `]`) tem assento de 0,40 × 0,40 m com topo a 0,45 m,
-placas de 0,018 m e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares
-de raio 0,011 m (16 segmentos), quadro sob o assento, travessas inferiores e dois montantes sustentam as placas;
-sapatas e fixações discretas completam a estrutura. O pivô fica no chão entre as pernas, com frente +Z.
-`objects::Chair::addTo` cria raízes independentes com meshes compartilhados; a CG-69 monta seis cadeiras atrás
-das carteiras, olhando para -Z, com inspeção acompanhando o placement. A cadeira usa `objects::furniture::kTubeRadius`,
-`kTubeSegments` e `kBoardThickness` do header compartilhado `include/objects/furniture_style.hpp` da CG-62,
-sem duplicar constantes.
-Tubos, travessas, montantes e fixações usam `furniture::tubeMaterial()`; assento e encosto usam
-`furniture::boardMaterial()` com `laminado_carteira.png`, repetida a cada 0,5 m (`kBoardTextureSize`, `uvScale` = 1),
-como na carteira. As ponteiras usam plástico preto com reflexo fraco. As seis instâncias compartilham os meshes,
-os materiais e uma única textura pertencente a `Chair`, sem carregar imagens em `addTo`.
+| Tecla | Ação |
+| --- | --- |
+| `1` | Sala completa |
+| `2` a `9`, `0` | Carteira, objeto articulado de demonstração, ventilador, lâmpada, interruptor, mesa do professor, tela retrátil, projetor, lixeira |
+| `[` / `]` | Alvo anterior / próximo, em ciclo, incluindo a cadeira e o quadro |
 
-O quadro escolar (CG-61, `objects::Board`) tem moldura externa de 3,00 × 1,20 m, painel estrutural de 16 mm e
-superfície lisa de escrita de 2,95 × 1,15 m, com face frontal em Z local = 0,018 m e UV 0–1 sem espelhamento.
-Moldura nos quatro lados (25 mm de largura), quatro acabamentos de canto e bandeja inferior de 2,60 × 0,10 m
-com bordas completam o conjunto. Na bandeja ficam um apagador de 0,10 × 0,05 × 0,03 m (largura, profundidade,
-altura), com feltro separado, e dois marcadores de 0,13 m com tampas e extremidades separadas.
-O pivô fica no centro da face posterior de fixação, frente +Z; a posição definitiva em `Classroom` é
-`(0, 1,50, -3,50)` m, com bordas da moldura a 0,90 e 2,10 m do chão.
-Moldura e cantos chegam a 0,022 e 0,024 m da parede: ficam pelo menos 14 mm atrás da traseira da lona
-(0,038 m), sem mudar a tela ou o alinhamento do projetor. A bandeja avança de 0,012 a 0,112 m da parede;
-com acessórios, fica entre 0,896 e 0,930 m do chão, abaixo da barra e do puxador da tela aberta.
-O quadro é o 11º alvo, depois da cadeira: da cena completa, pressione `[`; da cadeira, `]`; da lixeira (`0`),
-duas vezes `]`. A inspeção isola o conjunto, sem a tela, em perspectiva levemente acima e à direita.
-Cada `addTo` cria uma raiz independente com meshes e materiais compartilhados e acessórios descendentes.
-A superfície é branco fosco, sem textura para preservar a leitura da projeção; o suporte posterior é MDF,
-moldura e bandeja são alumínio, cantos e corpo do apagador são plástico escuro e o feltro não tem especular.
-Os marcadores têm corpo plástico claro e tampas/extremidades azuis ou vermelhas. Geometria, UVs e folga da lona
-permanecem inalteradas.
+### Janela
 
-A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubos T8 de 1,20 m, refletor em "W" e aletas;
-a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,
-origem no centro da face encostada na parede e frente +Z; `objects::LightSwitch::setOn(bool)` só inclina a tecla, sem
-reconstruir geometria. A tecla `L` (CG-73) apaga e acende as quatro luminárias: a tecla do interruptor bascula, as luzes
-pontuais desligam, os tubos param de brilhar e a luz ambiente cai, mas a luz de preenchimento continua iluminando a sala
-([docs/ILUMINACAO.md § 9](docs/ILUMINACAO.md#9-interação-ligar-a-luz)). Materiais (CG-74), só cor, sem textura:
-calha de chapa pintada de branco, refletor de alumínio, vidro leitoso do tubo e soquete de plástico; o interruptor é
-de plástico branco brilhante. As luminárias encostam no teto e o interruptor fica na parede direita.
+| Tecla | Ação |
+| --- | --- |
+| `Esc` | Libera o cursor; com o cursor já livre, fecha o programa |
+| `Q` | Fecha o programa |
 
-A mesa do professor (CG-64) tem tampo de 1,20 × 0,60 m a 0,75 m do chão, laterais e painel frontal de MDF e um
-gaveteiro de 3 gavetas fixas com puxadores. O pivô fica no chão, no centro da mesa; a frente (+Z, painel frontal) é o
-lado da turma e as gavetas abrem para o professor (-Z). A mesa fica na região frontal da sala. Materiais (CG-74):
-madeira escura com veio (`madeira_mesa_professor.png`) no tampo, nos painéis e nas gavetas, puxadores de metal
-escovado e sapatas de plástico preto.
-A tela retrátil (CG-66) tem lona de 2,0 × 1,5 m e caixa de 2,10 m no alto da parede frontal.
-A origem local é o centro da face da caixa encostada na parede, com frente +Z.
-`objects::ProjectionScreen::setOpenAmount(s)` recolhe a lona para cima (0 = recolhida, 1 = aberta) escalando só a
-articulação no topo da lona, então ela desce sem descolar da caixa. A tela começa recolhida, deixando o quadro à vista;
-a tecla `T` (CG-75) abre ou recolhe em ~2,5 s, com aceleração e frenagem suaves, e para nos limites (só a barra na
-fenda / lona inteira de 1,5 m). Materiais (CG-78): caixa e suportes de plástico branco-gelo, lona branca fosca com trama
-(`lona_tela.png`, repetida a cada 25 cm pelo `uvScale` do material, porque a UV da lona fica de 0 a 1 para o slide),
-barra inferior de alumínio, cordinha cinza-escura e puxador de plástico preto.
+Com o cursor livre, a câmera não se move, mas a inspeção e as interações continuam funcionando. Ao perder o foco da
+janela, o cursor é liberado e é preciso clicar de novo.
 
-O projetor (CG-65) fica preso ao teto a cerca de 2,9 m da tela, com corpo de 0,30 × 0,10 × 0,25 m e a lente como peça
-separada (a CG-77 dá brilho a ela). A origem local é o ponto de fixação no teto, com frente (lente) +Z.
-`objects::Projector::aimAt(alvo)` inclina a cabeça para o eixo da lente passar pelo alvo; a `Classroom` usa o centro
-da lona, então mover a tela ou o projetor realinha os dois sozinho. A tecla `P` (CG-77) liga o projetor: a lente
-acende e o slide é projetado por textura projetiva, como uma luz que carrega a imagem, e cai onde o feixe bater
-(na lona aberta ou, com ela recolhida, no quadro e na parede), num trapézio levemente mais largo embaixo
-(keystone). `←` e `→` trocam entre três slides (`slide_cg_1.png` a `slide_cg_3.png`). Técnica em
-[docs/ILUMINACAO.md § 10](docs/ILUMINACAO.md#10-projetor-textura-projetiva-cg-77). Materiais (CG-78): placa do teto
-e haste de metal grafite, suporte e corpo de plástico cinza texturizado (`plastico_projetor.png`) e lente de vidro
-escuro e brilhante, com material próprio que acende com o projetor ligado.
-
-A lixeira (CG-67) é um tronco de cone oco de 0,30 m de diâmetro na boca e 0,40 m de altura, com parede de 6 mm e
-borda com espessura, no chão ao lado da região do quadro. Pivô no centro do fundo.
-O mesh é montado em `src/objects/trash_can.cpp` (paredes externa e interna, borda e dois fundos). Material (CG-78):
-polipropileno azul acetinado com textura (`plastico_lixeira.png`, repetida a cada 25 cm), o mesmo na peça inteira.
-
-## Montagem da sala (CG-69)
-
-`objects::Room` forma um interior de **8 × 3 × 7 m**: X de -4 a +4, Y de 0 a 3 e Z de -3,5 a +3,5.
-O piso de 12 cm termina em Y = 0; o teto de 10 cm começa em Y = 3. As paredes de 10 cm crescem para fora
-do volume útil. Rodapés de 8 cm de altura dão acabamento. Piso, paredes, teto e rodapés têm meshes separados,
-normais externas aos sólidos (voltadas para a sala nas faces internas) e UVs físicas: repetição a cada 1 m
-nas superfícies principais e 0,5 m nos rodapés. Até receber os próprios materiais, usa o material padrão (cinza claro fosco).
-
-| Elemento | Pivô no mundo (m) | Orientação / quantidade |
-| --- | --- | --- |
-| Carteiras | X = ±1,25; Y = 0; Z = -0,85 / 0,65 / 2,15 | 6, sem giro: +Z é o lado onde o aluno senta, olhando para -Z |
-| Cadeiras | X = ±1,25; Y = 0; Z = -0,30 / 1,20 / 2,70 | 6, giro de 180° em Y: frente -Z para o quadro |
-| Quadro | (0; 1,50; -3,50) | 1, frente +Z, atrás da tela; bandeja e acessórios preservados |
-| Mesa do professor | (0; 0; -2,35) | 1, painel +Z para a turma; 0,85 m até a parede |
-| Tela | (0; 2,86; -3,5) | 1, frente +Z, placement preservado |
-| Projetor | (0; 3; -0,5) | 1, giro de 180° em Y e `aimAt(canvasCenter)` preservado |
-| Ventilador | (-4; 2,35; -0,4) | 1, giro de +90° em Y: frente +X para dentro |
-| Luminárias | X = ±1,6; Y = 3; Z = ±1,5 | 4, face superior no teto, corpo descendo |
-| Interruptor | (4; 1,1; 2,8) | 1, giro de -90° em Y: frente -X para dentro |
-| Lixeira | (2,6; 0; -3,1) | 1, pivô no chão |
-| Demonstração articulada | (2,9; 0; 1,8) | 1, preservada na lateral |
-
-O corredor central tem 1,90 m entre tampos e as fileiras têm passo de 1,50 m. Cada cadeira fica 0,55 m atrás
-da sua carteira: a frente do assento tem 0,125 m de folga até o tampo, com espaço livre entre fileiras e junto
-à parede traseira. O quadro de 3 × 1,2 m fica centrado em (0; 1,5; -3,5), com a moldura pelo menos 14 mm atrás
-da lona. As geometrias originais de `Chair` (CG-60) e `Board` (CG-61) são reutilizadas sem alterações.
-
-A vista inicial e `1` usam a câmera em (3,3; 2,3; 3,1), dentro do corredor traseiro, olhando para
-(-0,4; 0,9; -0,7). Clique para navegar livremente com os controles acima; não há colisão ou gravidade.
-As teclas `2`–`9` e `0` mantêm a ordem existente: cada uma mostra só um exemplar do objeto, escondendo
-Room e todas as outras instâncias. `[` e `]` percorrem os onze alvos em ciclo, incluindo uma cadeira
-representativa como décimo alvo e o quadro como décimo primeiro. A câmera de cada inspeção acompanha o placement.
-
-## Estrutura
+## Estrutura do projeto
 
 ```
-include/          headers (.hpp), em core/ (input, câmera), gfx/ (OpenGL), objects/ (objetos) e scene/ (a sala)
-src/              implementações (.cpp), mesmas pastas; main.cpp é o ponto de entrada
-shaders/          shaders GLSL (.vert, .frag)
-assets/textures/  imagens usadas como textura (com tabela de licenças)
-lib/              bibliotecas de terceiros embutidas (GLFW, GLAD, GLM, stb_image), veja lib/README.md
-cmake/            scripts auxiliares do CMake (doctor.cmake)
-docs/             documentação
-.github/          template de pull request
-build/            gerado pelo CMake: build/<preset>/
+include/          headers (.hpp)
+  core/           entrada (teclado/mouse) e câmera
+  gfx/            OpenGL: mesh, primitivas, shader, textura, material, luzes, renderer, grafo de cena
+  objects/        um módulo por objeto da sala
+  scene/          montagem da sala, luzes e teclas das interações
+src/              implementações (.cpp), nas mesmas pastas; main.cpp é o ponto de entrada
+shaders/          vertex e fragment shader (GLSL 330)
+assets/textures/  texturas e slides do projetor
+lib/              GLFW, GLAD, GLM e stb_image
+cmake/            doctor.cmake (diagnóstico do ambiente)
+docs/             documentação técnica
 ```
 
-Camadas, módulos e onde adicionar cada coisa: [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+Cada camada só depende das que estão abaixo dela (`scene → objects → gfx → core`). Os objetos são modelados no próprio
+espaço, com pivô na origem, e só a `scene/` decide onde cada um fica e qual tecla aciona cada interação.
 
 ## Documentação
 
 | Documento | Conteúdo |
 | --- | --- |
 | [docs/SETUP.md](docs/SETUP.md) | Instalação do ambiente (Windows, Linux, WSL2) e problemas comuns |
-| [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, módulos, onde adicionar uma feature, revisão da arquitetura |
-| [docs/CONVENCOES.md](docs/CONVENCOES.md) | Modelagem: metros, eixos, pivô, vértice, estilo da mobília, atalhos de teclado |
-| [docs/DEV-CONVENCOES.md](docs/DEV-CONVENCOES.md) | Nomes e formatação do código, branches, commits, PRs e fluxo no Jira |
-| [lib/README.md](lib/README.md) | Versões, origem e licenças das bibliotecas |
-| [assets/textures/README.md](assets/textures/README.md) | Regras e licenças das texturas |
+| [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, módulos, loop principal, montagem da sala e interações |
+| [docs/ILUMINACAO.md](docs/ILUMINACAO.md) | Blinn-Phong, luzes, materiais e textura projetiva do projetor |
+| [docs/CONVENCOES.md](docs/CONVENCOES.md) | Convenções de modelagem: metros, eixos, pivô, vértice, posições na sala |
+| [docs/DEV-CONVENCOES.md](docs/DEV-CONVENCOES.md) | Código, branches, commits e pull requests |
+| [lib/README.md](lib/README.md) | Versões e licenças das bibliotecas |
+| [assets/textures/README.md](assets/textures/README.md) | Origem e licença de cada textura |
 
-## Como contribuir
+## Equipe
 
-Resumo de [docs/DEV-CONVENCOES.md](docs/DEV-CONVENCOES.md):
+| Membro | Objetos | Outras partes |
+| --- | --- | --- |
+| Victor André Lopes Brasileiro | Ventilador, cadeira, quadro | Janela e entrada, câmera, montagem da sala |
+| José Riquelme Teixeira da Silva | Carteira, luminária e interruptor, mesa do professor | Shader, mesh, texturas, iluminação, materiais, interação da luz |
+| Erasmo da Silva Sá Junior | Projetor, tela retrátil, lixeira | Repositório e build, interações da tela, do ventilador e do projetor |
 
-1. Branch a partir de `dev`: `CG-<n>/<tipo>-<descricao>` (ex.: `CG-59/feat-ventilador-parede`).
-2. Commits `<tipo>(CG-<n>): <descrição>` (ex.: `feat(CG-59): modela as hélices do ventilador`).
-3. PR para `dev` com título `[CG-<n>] <resumo>`, preenchendo o template; 1 aprovação de outra pessoa para o merge.
+### Contribuindo
+
+Crie a branch a partir de `dev` (`CG-<n>/<tipo>-<descricao>`), faça commits `<tipo>(CG-<n>): <descrição>` e abra o PR
+para `dev` com uma aprovação de outro membro. Detalhes em [docs/DEV-CONVENCOES.md](docs/DEV-CONVENCOES.md).
+
+Assistentes de IA que estiverem ajudando neste repositório devem ler [docs/SETUP.md](docs/SETUP.md) e
+[docs/ARQUITETURA.md](docs/ARQUITETURA.md) antes de sugerir comandos ou mudanças de build. Não proponha MSVC, vcpkg,
+bibliotecas do sistema, GLUT/GLEW, pipeline fixo nem servidor X externo.
+
+## Créditos e licenças
+
+- Todas as texturas e os três slides foram gerados pela equipe com scripts próprios. A origem de cada imagem está em
+  [assets/textures/README.md](assets/textures/README.md).
+- Bibliotecas de terceiros em `lib/`, cada uma com a própria licença: GLFW (zlib), GLAD (código gerado em CC0/WTFPL e Apache-2.0),
+  GLM (MIT) e stb_image (MIT ou domínio público). Versões em [lib/README.md](lib/README.md).
+- Nenhum modelo 3D foi importado: toda a geometria da cena é gerada no código.
