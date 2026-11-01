@@ -12,8 +12,7 @@
 //
 //  Materiais (CG-74): o tubo de aço e as placas de laminado também são comuns. As funções
 //  devolvem o Material por valor; cada móvel guarda o seu como membro, junto com a própria
-//  Texture do laminado (o objeto é dono da textura, docs/ILUMINACAO.md § 8). A carteira já usa.
-//  Para a cadeira (membro A), o mesmo padrão da StudentDesk:
+//  Texture do laminado (o objeto é dono da textura, docs/ILUMINACAO.md § 8). Ambos usam esse padrão:
 //
 //      // chair.hpp, nesta ordem (a textura antes do material que aponta para ela):
 //      Texture boardTexture_;   // no construtor: boardTexture_(furniture::kBoardTexturePath)

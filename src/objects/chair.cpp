@@ -9,7 +9,7 @@ namespace objects {
 
 namespace {
 
-constexpr float kTextureSize = 0.40f;  // UV em metros, inclusive nos tubos e nas bordas das placas
+constexpr float kTextureSize = 0.40f;  // UV dos tubos e detalhes; placas usam kBoardTextureSize
 constexpr float kSeatSize = 0.40f;
 constexpr float kSeatTop = 0.45f;
 constexpr float kSeatBottom = kSeatTop - furniture::kBoardThickness;
@@ -35,8 +35,9 @@ glm::mat4 tubePlacement(const glm::vec3& base, float degrees, const glm::vec3& a
 }  // namespace
 
 Chair::Chair()
-    : seat_(primitives::box({kSeatSize, furniture::kBoardThickness, kSeatSize}, kTextureSize)),
-      backrest_(primitives::box({0.38f, kBackBoardHeight, furniture::kBoardThickness}, kTextureSize)),
+    : seat_(primitives::box({kSeatSize, furniture::kBoardThickness, kSeatSize}, furniture::kBoardTextureSize)),
+      backrest_(primitives::box({0.38f, kBackBoardHeight, furniture::kBoardThickness},
+                                furniture::kBoardTextureSize)),
       leg_(primitives::cylinder(furniture::kTubeRadius, kFrameHeight, furniture::kTubeSegments, kTextureSize)),
       rail_(primitives::cylinder(furniture::kTubeRadius, kRailLength, furniture::kTubeSegments, kTextureSize)),
       seatSide_(primitives::cylinder(furniture::kTubeRadius, kSeatSideLength,
@@ -44,17 +45,26 @@ Chair::Chair()
       backSupport_(primitives::cylinder(furniture::kTubeRadius, kBackSupportLength,
                                         furniture::kTubeSegments, kTextureSize)),
       foot_(primitives::cylinder(0.013f, kFootHeight, furniture::kTubeSegments, kTextureSize)),
-      fastener_(primitives::cylinder(0.003f, 0.0015f, furniture::kTubeSegments, kTextureSize)) {}
+      fastener_(primitives::cylinder(0.003f, 0.0015f, furniture::kTubeSegments, kTextureSize)),
+      boardTexture_(furniture::kBoardTexturePath),
+      tube_(furniture::tubeMaterial()),
+      board_(furniture::boardMaterial()),
+      footPlastic_(materials::plastic(glm::vec3(0.05f))) {
+    board_.diffuseMap = &boardTexture_;
+    footPlastic_.specular = glm::vec3(0.20f);
+    footPlastic_.shininess = 16.0f;
+}
 
 SceneNode& Chair::addTo(SceneNode& parent, const glm::mat4& placement) const {
     SceneNode& root = parent.addChild(nullptr, placement);
-    root.addChild(&seat_, glm::translate(glm::mat4(1.0f), {0.0f, kSeatBottom, 0.0f}));
+    root.material = &tube_;  // tubos, travessas, montantes e fixações herdam o grafite
+    root.addChild(&seat_, glm::translate(glm::mat4(1.0f), {0.0f, kSeatBottom, 0.0f})).material = &board_;
 
     for (float x : {-kLegOffset, kLegOffset}) {
         for (float z : {-kLegOffset, kLegOffset}) {
             root.addChild(&leg_, glm::translate(glm::mat4(1.0f), {x, 0.0f, z}));
             // Luvas discretas de 2 mm ao redor do tubo; a base plana toca y = 0.
-            root.addChild(&foot_, glm::translate(glm::mat4(1.0f), {x, 0.0f, z}));
+            root.addChild(&foot_, glm::translate(glm::mat4(1.0f), {x, 0.0f, z})).material = &footPlastic_;
         }
         // Laterais do quadro tocam a face inferior do assento e se prolongam até os montantes.
         root.addChild(&seatSide_, tubePlacement({x, kFrameHeight, kBackBaseZ}, 90.0f, {1, 0, 0}));
@@ -78,7 +88,7 @@ SceneNode& Chair::addTo(SceneNode& parent, const glm::mat4& placement) const {
     }
     back.addChild(&rail_, tubePlacement({-kLegOffset, 0.320f, 0.0f}, -90.0f, {0, 0, 1}));
     // Face traseira tangente aos tubos; topo a aproximadamente 0,85 m do chão.
-    back.addChild(&backrest_, glm::translate(glm::mat4(1.0f), {0.0f, kBackBoardBase, kBackBoardZ}));
+    back.addChild(&backrest_, glm::translate(glm::mat4(1.0f), {0.0f, kBackBoardBase, kBackBoardZ})).material = &board_;
     return root;
 }
 

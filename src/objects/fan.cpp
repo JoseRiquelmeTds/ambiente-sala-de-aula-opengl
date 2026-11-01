@@ -176,26 +176,44 @@ Fan::Fan()
       blade_(makeBlade()),
       hub_(primitives::cylinder(0.046f, 0.032f, 40)),
       frontGuard_(makeGuard(true)),
-      rearGuard_(makeGuard(false)) {}
+      rearGuard_(makeGuard(false)),
+      paintedMetal_(materials::metal(glm::vec3(0.16f, 0.17f, 0.19f))),
+      guardMetal_(materials::metal(glm::vec3(0.30f, 0.32f, 0.34f))),
+      motorPlastic_(materials::plastic(glm::vec3(0.09f, 0.10f, 0.12f))),
+      bladePlastic_(materials::plastic(glm::vec3(0.58f, 0.61f, 0.64f))),
+      hubPlastic_(materials::plastic(glm::vec3(0.20f, 0.22f, 0.25f))) {
+    // Pintura acetinada e plástico moldado: reflexos mais largos e fracos que metal polido.
+    paintedMetal_.specular = glm::vec3(0.30f);
+    paintedMetal_.shininess = 32.0f;
+    guardMetal_.specular = glm::vec3(0.50f);
+    guardMetal_.shininess = 48.0f;
+    motorPlastic_.specular = glm::vec3(0.20f);
+    motorPlastic_.shininess = 24.0f;
+    bladePlastic_.specular = glm::vec3(0.25f);
+    bladePlastic_.shininess = 24.0f;
+    hubPlastic_.specular = glm::vec3(0.30f);
+}
 
 SceneNode& Fan::addTo(SceneNode& parent, const glm::mat4& placement) {
     if (root_ != nullptr) {
         return *root_;
     }
     root_ = &parent.addChild(nullptr, placement);
+    root_->material = &paintedMetal_;
     SceneNode& fixed = root_->addChild(nullptr);
     fixed.addChild(&mount_, alongSegment({0, 0, 0}, {0, 0, 0.018f}));
     fixed.addChild(&support_);
-    fixed.addChild(&motor_, alongSegment({0, 0.16f, 0.075f}, {0, 0.16f, 0.255f}));
+    fixed.addChild(&motor_, alongSegment({0, 0.16f, 0.075f}, {0, 0.16f, 0.255f})).material = &motorPlastic_;
     fixed.addChild(&shaft_, alongSegment({0, 0.16f, 0.255f}, kRotorCenter));
-    fixed.addChild(&frontGuard_, translated(kRotorCenter));
-    fixed.addChild(&rearGuard_, translated(kRotorCenter));
+    fixed.addChild(&frontGuard_, translated(kRotorCenter)).material = &guardMetal_;
+    fixed.addChild(&rearGuard_, translated(kRotorCenter)).material = &guardMetal_;
 
     rotor_ = &root_->addChild(nullptr);
+    rotor_->material = &bladePlastic_;  // só as pás herdam; a tampa sobrescreve abaixo
     for (int blade = 0; blade < 3; ++blade) {
         rotor_->addChild(&blade_, glm::rotate(glm::mat4(1.0f), glm::radians(120.0f * blade), {0, 0, 1}));
     }
-    rotor_->addChild(&hub_, alongSegment({0, 0, -0.012f}, {0, 0, 0.020f}));
+    rotor_->addChild(&hub_, alongSegment({0, 0, -0.012f}, {0, 0, 0.020f})).material = &hubPlastic_;
     setRotorAngle(rotorAngle_);
     return *root_;
 }

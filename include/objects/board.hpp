@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 
@@ -22,7 +23,7 @@ public:
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement) const;
 
 private:
-    // Separação para a CG-72: branco fosco, suporte, alumínio, plástico e feltro.
+    // Superfície branca fosca, suporte, alumínio, plástico e feltro separados.
     Mesh surface_;
     Mesh body_;
     Mesh frame_;
@@ -33,6 +34,14 @@ private:
     Mesh marker_;
     Mesh markerCap_;
     Mesh markerEnd_;
+    Material writingSurface_;
+    Material backing_;
+    Material aluminum_;
+    Material darkPlastic_;
+    Material feltMaterial_;
+    Material markerPlastic_;
+    Material markerBlue_;
+    Material markerRed_;
 };
 
 }  // namespace objects
