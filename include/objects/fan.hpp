@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 
@@ -35,7 +36,7 @@ public:
     void update(float deltaTime);
 
 private:
-    // Peças separadas para receber metal escuro / plástico preto na CG-72.
+    // Materiais vivem com os meshes; os nós fixos e móveis só guardam ponteiros.
     Mesh mount_;
     Mesh support_;
     Mesh motor_;
@@ -44,6 +45,11 @@ private:
     Mesh hub_;
     Mesh frontGuard_;
     Mesh rearGuard_;
+    Material paintedMetal_;
+    Material guardMetal_;
+    Material motorPlastic_;
+    Material bladePlastic_;
+    Material hubPlastic_;
     SceneNode* root_ = nullptr;   // não donos; a árvore deve sobreviver às chamadas de setRotorAngle
     SceneNode* rotor_ = nullptr;
     float rotorAngle_ = 0.0f;

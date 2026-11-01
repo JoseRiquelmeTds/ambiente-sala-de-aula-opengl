@@ -3,8 +3,10 @@
 
 #include <glm/glm.hpp>
 
+#include "gfx/material.hpp"
 #include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
+#include "gfx/texture.hpp"
 
 namespace objects {
 
@@ -21,7 +23,7 @@ public:
     SceneNode& addTo(SceneNode& parent, const glm::mat4& placement) const;
 
 private:
-    // Placas e estrutura separadas para receber madeira / metal cinza-escuro na CG-72.
+    // Meshes compartilhados por todas as instâncias, com materiais por peça.
     Mesh seat_;
     Mesh backrest_;
     Mesh leg_;
@@ -30,6 +32,11 @@ private:
     Mesh backSupport_;
     Mesh foot_;
     Mesh fastener_;
+    // Uma textura por Chair, compartilhada pelo assento/encosto de todas as raízes.
+    Texture boardTexture_;
+    Material tube_;
+    Material board_;
+    Material footPlastic_;
 };
 
 }  // namespace objects

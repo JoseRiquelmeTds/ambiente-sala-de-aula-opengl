@@ -101,7 +101,8 @@ constexpr float kBoardThickness = 0.018f;  // MDF do tampo, assento e encosto
 Os materiais comuns também estão nesse header (CG-74): `furniture::tubeMaterial()` (aço pintado grafite),
 `furniture::boardMaterial()` (laminado), o caminho da textura do laminado (`kBoardTexturePath`) e o tiling das placas
 (`kBoardTextureSize`). Cada móvel guarda o próprio `Material` e a própria `Texture` como membros; o comentário do header
-mostra como aplicar na cadeira.
+mostra o padrão aplicado em `StudentDesk` e `Chair`. As placas de ambos usam repetição a cada 0,5 m, com
+`uvScale` = 1; cada objeto compartilha a própria textura entre todas as suas instâncias.
 
 ## 7. Medidas de referência
 
@@ -164,6 +165,14 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 As seleções funcionam com o cursor livre e reenquadram a câmera. Após uma tecla numérica, `[` e `]` continuam
 do alvo selecionado. Da sala inteira, `]` seleciona o primeiro alvo (carteira) e `[` o último (quadro, 11º alvo);
 o ciclo retorna do último ao primeiro e vice-versa. A tecla `1` restaura a cena completa.
+
+Revisão técnica da CG-68 no fechamento dos materiais de Victor: nenhuma correção de navegação foi necessária.
+A análise de `Camera::move`, `Input` e `main.cpp` confirmou normalização do deslocamento combinado, uso de
+`deltaTime`, limite de pitch de ±89°, liberação/limpeza da entrada ao perder foco e descarte do movimento
+no frame de inspeção. Um programa auxiliar local exercitou a câmera a 30/60/144 FPS e os callbacks reais
+de entrada com contexto OpenGL: seis direções, diagonal, mouse, foco, Escape/Q e restauração do enquadramento.
+Esses testes usam eventos simulados; a conferência física de mouse, teclado e troca de foco na janela
+continua sendo uma etapa manual antes da entrega. Velocidade e sensibilidade permanecem as existentes.
 
 ## 9. Texturas
 

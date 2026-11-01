@@ -102,7 +102,7 @@ aço de 22 mm, porta-livros de arame sob o tampo e ponteiras de plástico. Pivô
 frente (+Z) para o lado do aluno. Tubo e espessura do tampo vêm de `objects/furniture_style.hpp`, compartilhado com a
 cadeira. As seis instâncias da montagem compartilham os meshes e os materiais (CG-74): tubo de aço com pintura
 grafite, tampo de laminado madeirado claro (`laminado_carteira.png`) e ponteiras de plástico preto. Os materiais do
-tubo e do laminado também ficam em `objects/furniture_style.hpp`, prontos para a cadeira.
+tubo e do laminado também ficam em `objects/furniture_style.hpp`, usados pela cadeira.
 
 O ventilador (CG-59) tem três pás de aproximadamente 0,50 m de diâmetro e grades de 0,556 m externos.
 A origem local é a fixação na parede, com frente +Z. `Classroom` o fixa na parede esquerda, voltado para dentro;
@@ -110,8 +110,9 @@ A origem local é a fixação na parede, com frente +Z. `Classroom` o fixa na pa
 desliga: o rotor acelera até a velocidade escolhida em até 1,5 s e, desligado, desacelera até parar em até 3 s, com o
 giro calculado por `deltaTime` (igual em qualquer FPS). `Shift` + `V` alterna entre 2, 3 e 4 voltas/s, abaixo de um
 ventilador real para as três pás não parecerem paradas ou girando para trás na tela (efeito roda de carroça). Só o
-rotor gira, em torno do eixo do motor; grades, motor e suporte ficam parados. Até receber os próprios materiais, ele
-usa o material padrão (cinza claro fosco); grade/suporte serão metal cinza-escuro e motor/pás, plástico preto.
+rotor gira, em torno do eixo do motor; grades, motor e suporte ficam parados. Suporte e eixo usam metal pintado
+grafite acetinado; as grades são metálicas cinza, o motor é plástico escuro, as pás são plástico cinza-claro
+e a tampa central é plástico grafite. Cor e reflexo diferenciam as peças, sem textura nas pás em movimento.
 
 A cadeira escolar (CG-60, décimo alvo, acessível por `[` e `]`) tem assento de 0,40 × 0,40 m com topo a 0,45 m,
 placas de 0,018 m e encosto inclinado 8° para trás (-Z), chegando a aproximadamente 0,85 m. Quatro pernas tubulares
@@ -121,8 +122,10 @@ sapatas e fixações discretas completam a estrutura. O pivô fica no chão entr
 das carteiras, olhando para -Z, com inspeção acompanhando o placement. A cadeira usa `objects::furniture::kTubeRadius`,
 `kTubeSegments` e `kBoardThickness` do header compartilhado `include/objects/furniture_style.hpp` da CG-62,
 sem duplicar constantes.
-Até receber os próprios materiais, usa o material padrão (cinza claro fosco): metal cinza-escuro e madeira laminada
-serão materiais por peça.
+Tubos, travessas, montantes e fixações usam `furniture::tubeMaterial()`; assento e encosto usam
+`furniture::boardMaterial()` com `laminado_carteira.png`, repetida a cada 0,5 m (`kBoardTextureSize`, `uvScale` = 1),
+como na carteira. As ponteiras usam plástico preto com reflexo fraco. As seis instâncias compartilham os meshes,
+os materiais e uma única textura pertencente a `Chair`, sem carregar imagens em `addTo`.
 
 O quadro escolar (CG-61, `objects::Board`) tem moldura externa de 3,00 × 1,20 m, painel estrutural de 16 mm e
 superfície lisa de escrita de 2,95 × 1,15 m, com face frontal em Z local = 0,018 m e UV 0–1 sem espelhamento.
@@ -136,9 +139,11 @@ Moldura e cantos chegam a 0,022 e 0,024 m da parede: ficam pelo menos 14 mm atr�
 com acessórios, fica entre 0,896 e 0,930 m do chão, abaixo da barra e do puxador da tela aberta.
 O quadro é o 11º alvo, depois da cadeira: da cena completa, pressione `[`; da cadeira, `]`; da lixeira (`0`),
 duas vezes `]`. A inspeção isola o conjunto, sem a tela, em perspectiva levemente acima e à direita.
-Cada `addTo` cria uma raiz independente com meshes compartilhados e acessórios descendentes. Até receber os próprios
-materiais, usa o material padrão (cinza claro fosco); superfície, corpo, alumínio, bandeja, apagador/feltro e corpos/tampas dos marcadores
-estão separados para os futuros materiais por peça.
+Cada `addTo` cria uma raiz independente com meshes e materiais compartilhados e acessórios descendentes.
+A superfície é branco fosco, sem textura para preservar a leitura da projeção; o suporte posterior é MDF,
+moldura e bandeja são alumínio, cantos e corpo do apagador são plástico escuro e o feltro não tem especular.
+Os marcadores têm corpo plástico claro e tampas/extremidades azuis ou vermelhas. Geometria, UVs e folga da lona
+permanecem inalteradas.
 
 A lâmpada (CG-63) é uma luminária de sobrepor de 1,27 × 0,25 m com dois tubos T8 de 1,20 m, refletor em "W" e aletas;
 a origem local é o centro da face encostada no teto e ela desce para -Y. O interruptor tem espelho de 0,08 × 0,12 m,

@@ -283,6 +283,37 @@ Aqui os plásticos e a lona têm textura (`plastico_projetor.png`, `plastico_lix
 - **Sem espelhar:** a parede interna da lixeira tem u invertido em relação à externa, porque vista de dentro a volta
   anda para a esquerda; assim a textura aparece na mesma orientação nas duas faces.
 
+### Materiais aplicados: cadeira, ventilador e quadro (Victor)
+
+Os materiais são membros de `Chair`, `Fan` e `Board`; os nós guardam ponteiros não donos, como nos demais objetos.
+`Chair` carrega uma única `Texture` antes dos materiais; suas seis instâncias compartilham esses recursos.
+Nenhuma geometria, articulação ou interação foi alterada para aplicar os acabamentos.
+
+| Peça | Material / cor difusa | Especular | Brilho | Textura |
+| --- | --- | --- | --- | --- |
+| Cadeira: tubos, travessas, montantes e fixações | `furniture::tubeMaterial()`, grafite | 0,55 | 48 | — |
+| Cadeira: assento e encosto | `furniture::boardMaterial()`, branco | 0,12 | 24 | `laminado_carteira.png`, 0,5 m |
+| Cadeira: ponteiras | plastic, 0,05 | 0,20 | 16 | — |
+| Ventilador: fixação, suporte e eixo | metal pintado, (0,16; 0,17; 0,19) | 0,30 | 32 | — |
+| Ventilador: grades | metal, (0,30; 0,32; 0,34) | 0,50 | 48 | — |
+| Ventilador: motor | plastic, (0,09; 0,10; 0,12) | 0,20 | 24 | — |
+| Ventilador: pás | plastic, (0,58; 0,61; 0,64) | 0,25 | 24 | — |
+| Ventilador: tampa | plastic, (0,20; 0,22; 0,25) | 0,30 | 32 | — |
+| Quadro: escrita | matte, (0,88; 0,89; 0,87) | 0,01 | 4 | — |
+| Quadro: suporte posterior | wood, (0,28; 0,24; 0,18) | 0,06 | 12 | — |
+| Quadro: moldura e bandeja | metal/alumínio, (0,55; 0,55; 0,57) | 0,60 | 48 | — |
+| Quadro: cantos e corpo do apagador | plastic, (0,08; 0,09; 0,10) | 0,20 | 16 | — |
+| Quadro: feltro | matte, (0,12; 0,14; 0,15) | 0 | 4 | — |
+| Quadro: corpos dos marcadores | plastic, (0,82; 0,82; 0,80) | 0,45 | 32 | — |
+| Quadro: tampas e extremidades | plastic, azul (0,05; 0,12; 0,55) / vermelho (0,65; 0,05; 0,04) | 0,45 | 32 | — |
+
+O laminado conserva o veio horizontal em X no topo do assento e na frente do encosto. As UVs são calculadas
+nas dimensões reais das placas com `furniture::kBoardTextureSize`, como na carteira, e `uvScale` permanece 1.
+A inclinação de 8° do encosto transforma a peça inteira, preservando a escala e a orientação locais da textura.
+Não há textura nova: cor e especular bastam nos acabamentos lisos do ventilador, evitando padrões nas pás
+em movimento. O quadro permanece branco fosco e sem textura para receber a projeção com a tela recolhida;
+suas UVs 0–1 e a folga de 14 mm até a lona permanecem intactas.
+
 ### Herança pela árvore
 
 `SceneNode` tem `const Material* material = nullptr` (ponteiro **não dono**, como o `mesh`). No `SceneNode::draw`:
