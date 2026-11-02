@@ -56,8 +56,8 @@ e, no Linux, os headers do X11.
    ```powershell
    g++ --version          # deve mostrar "Built by MSYS2 project"
    cmake --version        # 3.21 ou mais novo
-   git clone https://github.com/JoseRiquelmeTds/Aula-OpenGl.git
-   cd Aula-OpenGl
+   git clone https://github.com/JoseRiquelmeTds/ambiente-sala-de-aula-opengl.git
+   cd ambiente-sala-de-aula-opengl
    cmake --preset windows
    cmake --build --preset windows --target run
    ```
@@ -70,8 +70,8 @@ do próprio Windows, então abre com dois cliques e roda em outro PC sem MSYS2.
 ```bash
 sudo apt update
 sudo apt install -y build-essential cmake libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev mesa-utils
-git clone https://github.com/JoseRiquelmeTds/Aula-OpenGl.git
-cd Aula-OpenGl
+git clone https://github.com/JoseRiquelmeTds/ambiente-sala-de-aula-opengl.git
+cd ambiente-sala-de-aula-opengl
 cmake --preset linux
 cmake --build --preset linux --target run
 ```
@@ -178,7 +178,7 @@ Para começar do zero (depois de trocar de compilador, por exemplo), apague a pa
 ## 6. Estrutura do projeto
 
 ```
-Aula-OpenGl/
+ambiente-sala-de-aula-opengl/
 ├── CMakeLists.txt        # build do projeto
 ├── CMakePresets.json     # presets linux, linux-release, windows, windows-release
 ├── include/              # headers (.hpp): só declarações (módulos em docs/ARQUITETURA.md)
