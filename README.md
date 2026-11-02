@@ -258,7 +258,6 @@ espaço, com o pivô na origem, e só a `scene/` decide onde cada um fica e qual
 
 | Documento | Conteúdo |
 | --- | --- |
-| [docs/relatorio-tecnico.md](docs/relatorio-tecnico.md) ([PDF](docs/relatorio-tecnico.pdf)) | Relatório técnico da entrega: todas as técnicas implementadas |
 | [docs/SETUP.md](docs/SETUP.md) | Instalação do ambiente (Windows, Linux, WSL2) e problemas comuns |
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, módulos, loop principal, montagem da sala e interações |
 | [docs/ILUMINACAO.md](docs/ILUMINACAO.md) | Blinn-Phong, luzes, materiais e textura projetiva do projetor |
