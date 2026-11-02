@@ -416,7 +416,7 @@ Documentados nos próprios headers em `include/gfx/`, com exemplos de uso: `vert
 
 ### Trechos para o relatório (AB2)
 
-As transformações pedidas na AB2 ficam marcadas no código com `AB2 ·`, para o relatório (CG-80) citar o trecho certo
+As transformações pedidas na AB2 ficam marcadas no código com `AB2 ·`, para o [relatório](relatorio/relatorio.pdf) (CG-80, capítulo 5) citar o trecho certo
 mesmo depois de as linhas mudarem: `git grep -n "AB2 ·"` lista todos.
 
 | Transformação | Task | Onde | Matriz |
