@@ -1,0 +1,15 @@
+# Arquivos intermediários do LaTeX (latexmk + biber); só o relatorio.pdf é versionado
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lol
+*.lot
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
