@@ -166,7 +166,7 @@ ventilador e o projetor desligados.
 | Tecla | Ação |
 | --- | --- |
 | `1` | Sala completa |
-| `2` a `9`, `0` | Um objeto isolado |
+| `2` a `9` | Um objeto isolado |
 | `[` / `]` | Objeto anterior / próximo |
 
 </td>
@@ -183,8 +183,9 @@ ventilador e o projetor desligados.
 </tr>
 </table>
 
-Ordem da inspeção: `2` carteira, `3` objeto articulado de demonstração, `4` ventilador, `5` lâmpada, `6` interruptor,
-`7` mesa do professor, `8` tela retrátil, `9` projetor e `0` lixeira. A cadeira e o quadro são alcançados com `[` e `]`.
+Ordem da inspeção, agrupada por autor: `2` ventilador, `3` cadeira e `4` quadro (Victor); `5` carteira, `6` lâmpada,
+`7` interruptor e `8` mesa do professor (José); `9` tela retrátil (Erasmo). O projetor e a lixeira, também do Erasmo,
+vêm depois da tela com `]`.
 Com o cursor livre, a câmera fica parada, mas a inspeção e as interações continuam funcionando.
 
 ## Roteiro de teste
@@ -206,8 +207,8 @@ para o quadro.
    direita, bascula. A sala escurece, mas continua visível pela luz de preenchimento. Aperte `L` para acender.
 7. **Materiais.** Aproxime-se da carteira e da mesa do professor e mova a câmera: o tubo metálico tem um reflexo forte e
    concentrado, o plástico tem um brilho médio e a madeira quase não reflete.
-8. **Inspeção.** Aperte `2` a `9` e `0`, ou percorra com `[` e `]`, para ver cada objeto isolado. Aperte `1` para voltar
-   à sala completa.
+8. **Inspeção.** Aperte `2` a `9`, ou percorra com `[` e `]`, para ver cada objeto isolado. Aperte `1` para voltar à
+   sala completa.
 9. **Saída.** `Esc` libera o cursor; `Esc` de novo, ou `Q`, fecha o programa.
 
 | Transformação exigida | Onde ver | Tecla |

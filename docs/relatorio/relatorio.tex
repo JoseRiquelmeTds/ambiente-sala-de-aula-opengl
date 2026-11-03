@@ -428,12 +428,9 @@ enquadra a câmera num exemplar.
   \medskip
   \begin{subfigure}{0.32\textwidth}\centering
     \includegraphics[width=\textwidth]{figuras/inspecao-projetor-ligado.png}\caption{Projetor ligado}
-  \end{subfigure}\hfill
+  \end{subfigure}\hspace{0.02\textwidth}
   \begin{subfigure}{0.32\textwidth}\centering
     \includegraphics[width=\textwidth]{figuras/inspecao-lixeira.png}\caption{Lixeira}
-  \end{subfigure}\hfill
-  \begin{subfigure}{0.32\textwidth}\centering
-    \includegraphics[width=\textwidth]{figuras/inspecao-articulado.png}\caption{Objeto articulado}
   \end{subfigure}
   \fonteautoras
 \end{figure}
@@ -733,8 +730,8 @@ $\mathbf{f}$ ficaria paralelo ao vetor ``cima'' e o \texttt{lookAt} não teria c
 \texttt{Ctrl} a sobem e descem; o deslocamento combinado é normalizado, para a diagonal não ser mais rápida.
 
 O clique esquerdo captura o cursor; com ele livre, não há movimento, mas a inspeção e as interações continuam
-funcionando. As teclas \texttt{1} a \texttt{0} e \texttt{[}/\texttt{]} selecionam a cena completa ou um dos
-onze alvos de inspeção. As interações são tratadas em \texttt{Classroom::update}, que chama o método do objeto:
+funcionando. As teclas \texttt{1} a \texttt{9} e \texttt{[}/\texttt{]} selecionam a cena completa ou um dos
+dez alvos de inspeção, agrupados por autor. As interações são tratadas em \texttt{Classroom::update}, que chama o método do objeto:
 \texttt{L} (luzes), \texttt{T} (tela), \texttt{V} e \texttt{Shift}+\texttt{V} (ventilador), \texttt{P} e as
 setas (projetor). A lista completa está no Apêndice~\ref{ap:comandos}.
 
@@ -889,9 +886,9 @@ o GLFW; no teclado ABNT2, \texttt{[} e \texttt{]} são as duas teclas à direita
     \texttt{Espaço} / \texttt{Ctrl} esquerdo & Sobe / desce \\
     \multicolumn{2}{|l|}{\textit{Inspeção}} \\
     \texttt{1} & Cena completa \\
-    \texttt{2} a \texttt{9}, \texttt{0} & Carteira, objeto articulado, ventilador, luminária, interruptor, mesa
-      do professor, tela retrátil, projetor e lixeira \\
-    \texttt{[} / \texttt{]} & Alvo anterior / próximo, em ciclo pelos onze alvos (inclui cadeira e quadro) \\
+    \texttt{2} a \texttt{9} & Ventilador, cadeira, quadro, carteira, luminária, interruptor, mesa do professor
+      e tela retrátil \\
+    \texttt{[} / \texttt{]} & Alvo anterior / próximo, em ciclo pelos dez alvos (inclui projetor e lixeira) \\
     \multicolumn{2}{|l|}{\textit{Interações}} \\
     \texttt{L} & Liga / desliga as luzes do teto (a tecla do interruptor bascula junto) \\
     \texttt{T} & Abre / recolhe a tela retrátil (escala) \\

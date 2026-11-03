@@ -9,7 +9,6 @@
 
 #include "core/camera.hpp"
 #include "core/input.hpp"
-#include "gfx/primitives.hpp"
 
 namespace scene {
 
@@ -95,18 +94,50 @@ glm::vec3 toWorld(const glm::mat4& placement, const glm::vec3& local) {
 
 }  // namespace
 
-Classroom::Classroom()
-    : baseMesh_(primitives::cylinder(0.25f, 0.05f)),
-      rodMesh_(primitives::cylinder(0.025f, 1.0f, 16)),
-      armMesh_(primitives::box({0.5f, 0.04f, 0.04f})),
-      demoWood_(materials::wood()),
-      demoMetal_(materials::metal()),
-      demoPlastic_(materials::plastic()) {
+Classroom::Classroom() {
     room_.addTo(root_, glm::mat4(1.0f));
 
     lighting_.ambient = kAmbientLight;
     lighting_.fill.direction = kFillDirection;
     lighting_.fill.color = kFillColor;
+
+    // Os alvos de inspeção ficam na ordem em que são registrados, agrupados por autor: objetos do
+    // Victor nas teclas 2 a 4, do José de 5 a 8 e do Erasmo a partir do 9 (os dois últimos só com ]).
+
+    // Fixação na parede esquerda: Ry(+90°) leva a frente +Z para +X, para dentro da sala.
+    // O centro do rotor fica 0,16 m acima do pivô; a grade termina abaixo de Y = 2,79 m.
+    glm::mat4 fanPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(-4.0f, 2.35f, -0.4f));
+    fanPlacement = glm::rotate(fanPlacement, glm::radians(90.0f), glm::vec3(0, 1, 0));
+    const SceneNode& fan = fan_.addTo(root_, fanPlacement);
+    // Enquadramentos no espaço do objeto acompanham também uma futura mudança de orientação.
+    const glm::vec3 fanEye = glm::vec3(fanPlacement * glm::vec4(0.48f, 0.40f, 1.10f, 1.0f));
+    const glm::vec3 fanCenter = glm::vec3(fanPlacement * glm::vec4(0, 0.13f, 0.23f, 1.0f));
+    targets_.push_back({"ventilador", &fan, fanEye, fanCenter});  // tecla 2
+
+    // Cadeiras (CG-60): Ry(180°) leva a frente local +Z para -Z, olhando para o quadro.
+    // O recuo de 0,55 m deixa 0,125 m entre a frente do assento e a borda do tampo.
+    // Um só alvo representativo; os outros cinco são irmãos independentes.
+    for (std::size_t i = 0; i < std::size(kStudentRows); ++i) {
+        for (std::size_t j = 0; j < std::size(kStudentColumns); ++j) {
+            const float z = kStudentRows[i];
+            const float x = kStudentColumns[j];
+            glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z + kChairOffsetZ));
+            placement = glm::rotate(placement, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            const SceneNode& chair = chair_.addTo(root_, placement);
+            if (i == 0 && j == 0) {
+                targets_.push_back({"cadeira", &chair, toWorld(placement, {0.72f, 0.80f, 0.98f}),
+                                    toWorld(placement, {0.0f, 0.42f, -0.03f})});  // tecla 3
+            }
+        }
+    }
+
+    // Quadro (CG-61): centro da fixação na parede, bordas a 0,90 e 2,10 m do chão.
+    // Corpo/moldura ficam atrás da lona; bandeja e acessórios abaixo da ponta da tela aberta.
+    // Fixação definitiva: a moldura fica ao menos 14 mm atrás da lona, sem mover tela nem projetor.
+    const glm::mat4 boardPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, kFrontWallZ));
+    const SceneNode& board = board_.addTo(root_, boardPlacement);
+    targets_.push_back({"quadro", &board, toWorld(boardPlacement, {0.85f, 0.65f, 3.10f}),
+                        toWorld(boardPlacement, {0.0f, -0.03f, 0.04f})});  // tecla 4
 
     // Duas colunas, três fileiras: corredor central de 1,90 m e passo de 1,50 m entre fileiras.
     // No modelo real, +Z é o lado do ALUNO (porta-livros aberto), não a direção do olhar.
@@ -120,44 +151,10 @@ Classroom::Classroom()
             const SceneNode& desk = studentDesk_.addTo(root_, placement);
             if (i == 0 && j == 0) {
                 targets_.push_back({"carteira", &desk, toWorld(placement, {0.7f, 1.1f, 1.1f}),
-                                    toWorld(placement, {0.0f, 0.5f, 0.0f})});  // tecla 2
+                                    toWorld(placement, {0.0f, 0.5f, 0.0f})});  // tecla 5
             }
         }
     }
-
-    // Objeto composto: base -> haste -> articulação (sem mesh) -> braço.
-    // Mover a base leva todo o resto junto; girar a articulação só mexe no braço.
-    const glm::mat4 demoPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(2.9f, 0.0f, 1.8f));
-    SceneNode& base = root_.addChild(&baseMesh_, demoPlacement);
-    SceneNode& rod = base.addChild(&rodMesh_, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.05f, 0.0f)));
-
-    // Pivô no topo da haste (y = 1 no espaço da haste), girado 45° em Y e 20° para cima em Z.
-    glm::mat4 jointTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    jointTransform = glm::rotate(jointTransform, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    jointTransform = glm::rotate(jointTransform, glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    SceneNode& joint = rod.addChild(nullptr, jointTransform);
-
-    // O braço tem o pivô na base e centrado em x; deslocado 0,25 m para começar no pivô
-    // em vez de atravessá-lo, e 0,02 m para baixo para o eixo do braço passar pelo pivô.
-    joint.addChild(&armMesh_, glm::translate(glm::mat4(1.0f), glm::vec3(0.25f, -0.02f, 0.0f)));
-
-    // Materiais (CG-72): base de madeira, haste de metal e braço de plástico. O plástico fica na
-    // articulação (sem mesh) e o braço o herda; um filho novo da articulação também seria plástico.
-    base.material = &demoWood_;
-    rod.material = &demoMetal_;
-    joint.material = &demoPlastic_;
-    targets_.push_back({"objeto articulado", &base, toWorld(demoPlacement, {1.2f, 1.4f, 2.0f}),
-                        toWorld(demoPlacement, {0.1f, 0.6f, 0.0f})});  // tecla 3
-
-    // Fixação na parede esquerda: Ry(+90°) leva a frente +Z para +X, para dentro da sala.
-    // O centro do rotor fica 0,16 m acima do pivô; a grade termina abaixo de Y = 2,79 m.
-    glm::mat4 fanPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(-4.0f, 2.35f, -0.4f));
-    fanPlacement = glm::rotate(fanPlacement, glm::radians(90.0f), glm::vec3(0, 1, 0));
-    const SceneNode& fan = fan_.addTo(root_, fanPlacement);
-    // Enquadramentos no espaço do objeto acompanham também uma futura mudança de orientação.
-    const glm::vec3 fanEye = glm::vec3(fanPlacement * glm::vec4(0.48f, 0.40f, 1.10f, 1.0f));
-    const glm::vec3 fanCenter = glm::vec3(fanPlacement * glm::vec4(0, 0.13f, 0.23f, 1.0f));
-    targets_.push_back({"ventilador", &fan, fanEye, fanCenter});  // tecla 4
 
     // Face superior em Y = 3: o modelo desce em -Y. Quatro instâncias, longe do projetor central.
     for (std::size_t i = 0; i < std::size(kLampRows); ++i) {
@@ -176,7 +173,7 @@ Classroom::Classroom()
             lighting_.pointLights.push_back(light);
             if (i == 0 && j == 0) {
                 targets_.push_back({"lâmpada", &lamp, toWorld(placement, {0.5f, -0.8f, 1.1f}),
-                                    toWorld(placement, {0.0f, -0.04f, 0.0f})});  // tecla 5, de baixo
+                                    toWorld(placement, {0.0f, -0.04f, 0.0f})});  // tecla 6, de baixo
             }
         }
     }
@@ -186,7 +183,7 @@ Classroom::Classroom()
     switchPlacement = glm::rotate(switchPlacement, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     const SceneNode& lightSwitch = lightSwitch_.addTo(root_, switchPlacement);
     targets_.push_back({"interruptor", &lightSwitch, toWorld(switchPlacement, {0.1f, 0.06f, 0.26f}),
-                        toWorld(switchPlacement, {0.0f, 0.0f, 0.01f})});  // tecla 6
+                        toWorld(switchPlacement, {0.0f, 0.0f, 0.01f})});  // tecla 7
 
     // Painel frontal +Z para a turma; 0,85 m entre tampo e parede para circulação do professor.
     const glm::mat4 deskPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.35f));
@@ -195,12 +192,13 @@ Classroom::Classroom()
     // posição ou a orientação mudarem.
     const glm::vec3 deskEye = glm::vec3(deskPlacement * glm::vec4(-1.0f, 1.2f, -1.5f, 1.0f));
     const glm::vec3 deskCenter = glm::vec3(deskPlacement * glm::vec4(0.0f, 0.4f, 0.0f, 1.0f));
-    targets_.push_back({"mesa do professor", &teacherDesk, deskEye, deskCenter});  // tecla 7
+    targets_.push_back({"mesa do professor", &teacherDesk, deskEye, deskCenter});  // tecla 8
+
     // Tela retrátil (CG-66): frente (+Z do objeto) já aponta para dentro da sala, só translação.
     const glm::mat4 screenPlacement = glm::translate(glm::mat4(1.0f), kScreenMount);
     const SceneNode& screen = screen_.addTo(root_, screenPlacement);
     targets_.push_back({"tela retrátil", &screen, toWorld(screenPlacement, {0.9f, -0.5f, 2.6f}),
-                        toWorld(screenPlacement, {0.0f, -0.8f, 0.0f})});  // tecla 8
+                        toWorld(screenPlacement, {0.0f, -0.8f, 0.0f})});  // tecla 9
 
     // Projetor (CG-65): girado 180° em Y para a frente (+Z do objeto) olhar para a tela, em -Z.
     glm::mat4 projectorPlacement = glm::translate(glm::mat4(1.0f), kProjectorMount);
@@ -233,7 +231,7 @@ Classroom::Classroom()
     lighting_.projector.referenceDistance = throwDistance;
 
     targets_.push_back({"projetor", &projector, toWorld(projectorPlacement, {0.55f, -0.35f, 0.75f}),
-                        toWorld(projectorPlacement, {0.0f, -0.22f, 0.0f})});  // tecla 9
+                        toWorld(projectorPlacement, {0.0f, -0.22f, 0.0f})});  // ] depois da tela
 
     // Lixeira (CG-67): no chão, ao lado da região do quadro, fora da circulação da mesa.
     // Simétrica em Y, então basta a translação.
@@ -241,32 +239,7 @@ Classroom::Classroom()
     const SceneNode& trashCan = trashCan_.addTo(root_, trashCanPlacement);
     // Enquadramento de cima e de lado, para ver o interior oco e a espessura da borda.
     targets_.push_back({"lixeira", &trashCan, toWorld(trashCanPlacement, {-0.45f, 0.85f, 0.55f}),
-                        toWorld(trashCanPlacement, {0.0f, 0.18f, 0.0f})});  // tecla 0
-
-    // Cadeiras (CG-60): Ry(180°) leva a frente local +Z para -Z, olhando para o quadro.
-    // O recuo de 0,55 m deixa 0,125 m entre a frente do assento e a borda do tampo.
-    // Um só alvo representativo, depois dos nove anteriores; os outros cinco são irmãos independentes.
-    for (std::size_t i = 0; i < std::size(kStudentRows); ++i) {
-        for (std::size_t j = 0; j < std::size(kStudentColumns); ++j) {
-            const float z = kStudentRows[i];
-            const float x = kStudentColumns[j];
-            glm::mat4 placement = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z + kChairOffsetZ));
-            placement = glm::rotate(placement, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            const SceneNode& chair = chair_.addTo(root_, placement);
-            if (i == 0 && j == 0) {
-                targets_.push_back({"cadeira", &chair, toWorld(placement, {0.72f, 0.80f, 0.98f}),
-                                    toWorld(placement, {0.0f, 0.42f, -0.03f})});  // décimo alvo, [ e ]
-            }
-        }
-    }
-
-    // Quadro (CG-61): centro da fixação na parede, bordas a 0,90 e 2,10 m do chão.
-    // Corpo/moldura ficam atrás da lona; bandeja e acessórios abaixo da ponta da tela aberta.
-    // Fixação definitiva: a moldura fica ao menos 14 mm atrás da lona, sem mover tela nem projetor.
-    const glm::mat4 boardPlacement = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, kFrontWallZ));
-    const SceneNode& board = board_.addTo(root_, boardPlacement);
-    targets_.push_back({"quadro", &board, toWorld(boardPlacement, {0.85f, 0.65f, 3.10f}),
-                        toWorld(boardPlacement, {0.0f, -0.03f, 0.04f})});  // 11º alvo, após a cadeira: [ e ]
+                        toWorld(trashCanPlacement, {0.0f, 0.18f, 0.0f})});  // ] depois do projetor, último alvo
 
     // Estado inicial: sala acesa, com a tecla do interruptor já na posição "ligado" e os tubos brilhando.
     // Depois das luminárias e do interruptor, que esta chamada altera.
@@ -336,14 +309,14 @@ void Classroom::setProjectorOn(bool on) {
 }
 
 bool Classroom::handleInspection(const Input& input, Camera& camera) {
-    // GLFW_KEY_0 a GLFW_KEY_9 são consecutivos. 1 = sala inteira, 2 = primeiro alvo, ..., 9 = oitavo e
-    // 0 = nono (fica depois do 9 no teclado).
-    for (int digit = 0; digit <= 9; ++digit) {
+    // GLFW_KEY_1 a GLFW_KEY_9 são consecutivos. 1 = sala inteira, 2 = primeiro alvo, ..., 9 = oitavo.
+    // Os alvos depois do oitavo (projetor e lixeira) só são alcançados com [ e ].
+    for (int digit = 1; digit <= 9; ++digit) {
         if (input.keyPressed(GLFW_KEY_0 + digit)) {
             if (digit == 1) {
                 return selectInspection(kWholeScene, camera);
             }
-            return selectInspection(digit == 0 ? 8 : digit - 2, camera);
+            return selectInspection(digit - 2, camera);
         }
     }
     // A cena inteira não faz parte do ciclo. Partindo dela, ] vai ao primeiro e [ ao último.

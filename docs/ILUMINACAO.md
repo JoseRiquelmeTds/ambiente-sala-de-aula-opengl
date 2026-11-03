@@ -180,7 +180,6 @@ da transformação. A tangente é transformada como os vértices (`t' = M·t`). 
 | Struct `Material`, presets e envio (`uMaterial.*`) | `include/gfx/material.hpp`, `src/gfx/material.cpp` |
 | Herança do material pela árvore | `src/gfx/scene_node.cpp` (`SceneNode::draw`) |
 | Material padrão (`materials::neutral()`) | `src/gfx/renderer.cpp` (`kDefaultMaterial`) |
-| Demonstração dos presets (objeto articulado, tecla `3`) | `src/scene/classroom.cpp` |
 
 Modos do fragment shader (`kDebugMode` em `src/gfx/renderer.cpp`): **0 = iluminado** (padrão), 1 = normal como cor,
 2 = UV como cor, 3 = cor difusa do material sem luz. Os modos 1 a 3 servem para conferir normais, UVs e texturas de um
@@ -219,11 +218,6 @@ num membro e ajuste cor, textura ou `uvScale`.
 
 Todos aceitam a cor como parâmetro (`materials::plastic(glm::vec3(0.1f, 0.3f, 0.7f))` para plástico azul), exceto
 `neutral()`.
-
-O objeto articulado de demonstração (tecla `3`) usa três presets lado a lado: base de madeira, haste de metal e
-braço de plástico; as paredes e os objetos ainda sem material mostram o comportamento fosco do `neutral()`. A
-diferença aparece sobretudo no reflexo: a haste de metal fica escura, com uma faixa clara quando vista no ângulo do
-reflexo da lâmpada; o braço de plástico ganha um brilho claro no topo; a base de madeira não brilha.
 
 ### Materiais aplicados (CG-74: carteira, luminária, interruptor e mesa do professor)
 

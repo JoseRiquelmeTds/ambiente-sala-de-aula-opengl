@@ -7,8 +7,6 @@
 #include <vector>
 
 #include "gfx/light.hpp"
-#include "gfx/material.hpp"
-#include "gfx/mesh.hpp"
 #include "gfx/scene_node.hpp"
 #include "objects/board.hpp"
 #include "objects/chair.hpp"
@@ -55,8 +53,9 @@ public:
     // P: liga/desliga o projetor; ← e →: slide anterior/próximo (CG-77).
     void update(const Input& input, float deltaTime);
 
-    // Tecla 1 mostra a sala inteira; 2 a 9 e 0 preservam os nove primeiros alvos.
-    // [ e ] percorrem todos os alvos em ciclo (hoje onze, com o quadro no fim), mesmo com cursor livre.
+    // Tecla 1 mostra a sala inteira; 2 a 9 selecionam os oito primeiros alvos (Victor 2-4, José 5-8,
+    // Erasmo 9). [ e ] percorrem todos os alvos em ciclo (hoje dez, com projetor e lixeira no fim),
+    // mesmo com cursor livre.
     // Reenquadra a câmera, que depois continua livre. Retorna true se reenquadrou neste frame
     // (o chamador não aplica movimento pendente).
     bool handleInspection(const Input& input, Camera& camera);
@@ -87,15 +86,8 @@ private:
         glm::vec3 center;  // para onde olha
     };
 
-    // Membros na ordem de construção: meshes e materiais antes da árvore, que aponta para eles
-    // e é destruída primeiro.
-    Mesh baseMesh_;
-    Mesh rodMesh_;
-    Mesh armMesh_;
-    // Materiais do objeto articulado (CG-72): um preset em cada peça, para comparar lado a lado.
-    Material demoWood_;
-    Material demoMetal_;
-    Material demoPlastic_;
+    // Membros na ordem de construção: os objetos (donos dos meshes e materiais) antes da árvore,
+    // que aponta para eles e é destruída primeiro.
     objects::StudentDesk studentDesk_;
     objects::Fan fan_;
     objects::Lamp lamp_;

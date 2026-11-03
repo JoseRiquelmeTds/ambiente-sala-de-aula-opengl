@@ -8,7 +8,7 @@ vértice) em [CONVENCOES.md](CONVENCOES.md).
 > Iluminação Blinn-Phong (CG-71) e materiais por peça (CG-72): [ILUMINACAO.md](ILUMINACAO.md), com o passo a passo
 > para aplicar material num objeto. `scene/classroom` monta a sala de 8 × 3 × 7 m (CG-69),
 > com `objects::Room`, seis carteiras, seis cadeiras, quadro, quatro luminárias e os demais objetos disponíveis.
-> A demonstração articulada continua inspecionável; são onze alvos, incluindo cadeira (CG-60) e quadro (CG-61).
+> São dez alvos de inspeção, um por objeto modelado (o interruptor conta à parte da luminária).
 
 ## Sumário
 
@@ -241,7 +241,7 @@ objects::Fan fan_;
 glm::mat4 fanPlacement = glm::translate(glm::mat4(1.0f), {3.9f, 2.4f, -1.0f});
 fanPlacement = glm::rotate(fanPlacement, glm::radians(-90.0f), {0.0f, 1.0f, 0.0f});
 const SceneNode& fan = fan_.addTo(root_, fanPlacement);
-targets_.push_back({"ventilador", &fan, {2.5f, 2.0f, 0.0f}, {3.9f, 2.4f, -1.0f}});  // alvos após o nono: [ e ]
+targets_.push_back({"ventilador", &fan, {2.5f, 2.0f, 0.0f}, {3.9f, 2.4f, -1.0f}});  // tecla 2
 
 // src/scene/classroom.cpp, em Classroom::update
 if (input.keyPressed(GLFW_KEY_V)) {
@@ -327,10 +327,10 @@ com a proporção atual do framebuffer e suspende o desenho quando a largura ou 
 na câmera. O movimento combinado é normalizado e usa `deltaTime`; o delta do mouse **não** usa
 `deltaTime`. Não há colisões, gravidade ou limite de deslocamento.
 
-A inspeção fica em `scene::Classroom` (CG-87, CG-60, CG-61): `1` mostra a sala inteira. Os nove atalhos existentes ficam
-preservados: `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor,
-`7` = mesa do professor, `8` = tela retrátil, `9` = projetor e `0` = lixeira. A cadeira é registrada depois deles,
-como décimo alvo e o quadro, como décimo primeiro. `[` e `]` percorrem os alvos com retorno circular;
+A inspeção fica em `scene::Classroom` (CG-87, CG-60, CG-61): `1` mostra a sala inteira. Os alvos ficam na ordem em
+que são registrados no construtor, agrupados por autor: `2` = ventilador, `3` = cadeira, `4` = quadro (Victor);
+`5` = carteira, `6` = lâmpada, `7` = interruptor, `8` = mesa do professor (José); `9` = tela retrátil e, só pelo
+ciclo, projetor e lixeira (Erasmo). `[` e `]` percorrem os dez alvos com retorno circular;
 após uma seleção numérica, continuam desse alvo. Da cena inteira, `]` vai ao primeiro e `[` ao último.
 `currentInspection_` começa em
 `kWholeScene` e só muda quando `selectInspection()` aceita uma seleção, junto com o isolamento e o enquadramento.
@@ -384,8 +384,8 @@ Em `Classroom`, `room_` é declarado antes de `root_`, assim como os outros dono
 substituído. Room é filho direto da raiz, irmão de cada móvel: isolá-los oculta toda a envoltória e as outras
 instâncias. Seis chamadas a `StudentDesk::addTo`, seis a `Chair::addTo` e quatro a `Lamp::addTo` compartilham
 geometria, com nós independentes e referências estáveis (`unique_ptr` de `SceneNode`). Só o primeiro exemplar entra na inspeção;
-os nove alvos numéricos permanecem na mesma ordem, seguidos por cadeira e quadro no ciclo `[`/`]`.
-São 25 filhos diretos da raiz, dos quais onze são alvos representativos. A cadeira fica a +0,55 m em Z da
+os alvos seguem a ordem por autor descrita em *Câmera livre e inspeção (CG-55)*.
+São 24 filhos diretos da raiz, dos quais dez são alvos representativos. A cadeira fica a +0,55 m em Z da
 carteira e gira 180° em Y; o quadro fica em (0; 1,5; -3,5), sem modificar os modelos da CG-60/CG-61.
 
 Os pontos das câmeras de inspeção são transformados do espaço local para o mundo pelo placement. `main` seleciona
@@ -406,7 +406,7 @@ por peça. Técnica, fórmulas e valores: [ILUMINACAO.md](ILUMINACAO.md).
 emissiva, e se envia ao shader com `apply` (`uMaterial.*`, textura na unidade 0). `SceneNode::material` é um ponteiro
 não dono **herdado** pelos filhos: o material vai na raiz do objeto e só as peças diferentes sobrescrevem. Peça sem
 material em nenhum ancestral usa `materials::neutral()`, o padrão do renderer. Presets (`metal`, `wood`, `plastic`,
-`matte`) em `namespace materials`; a demonstração articulada usa madeira, metal e plástico.
+`matte`) em `namespace materials`.
 
 ### Mesh, primitivas, SceneNode, Shader e Texture (CG-56 a CG-58)
 
