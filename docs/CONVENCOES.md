@@ -138,7 +138,7 @@ reais.
   interruptor na direita gira -90° (+Z vira -X); luminárias e projetor encostam em Y = 3 e descem em -Y.
 - Room e cada instância são filhos diretos da raiz. Um único alvo por tipo; esconder os demais filhos também
   esconde paredes, teto, piso e móveis repetidos. Enquadramentos são pontos locais transformados pelo placement.
-  Os nove alvos numéricos são preservados; cadeira e quadro completam os onze alvos do ciclo `[`/`]`.
+  São dez alvos, agrupados por autor: Victor nas teclas `2`–`4`, José em `5`–`8` e Erasmo a partir do `9`.
 - UVs de Room repetem a cada 1 m nas superfícies principais e 0,5 m nos rodapés, sem escala nos placements.
 
 ## 8. Atalhos de teclado
@@ -153,8 +153,8 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `Q` | Fecha | `main.cpp` | CG-54 | em uso |
 | `W` `A` `S` `D` + mouse | Anda e olha | `main.cpp` | CG-55, CG-68 | em uso |
 | `Espaço` / `Ctrl` esquerdo | Sobe / desce | `main.cpp` | CG-55 | em uso |
-| `1`, `2`–`9`, `0` | Inspeção: sala inteira / os nove primeiros alvos, preservados. `2` = carteira, `3` = objeto articulado, `4` = ventilador, `5` = lâmpada, `6` = interruptor, `7` = mesa do professor, `8` = tela retrátil, `9` = projetor, `0` = lixeira | `scene/classroom` | CG-55, CG-87, CG-62, CG-59, CG-63, CG-64, CG-66, CG-65, CG-67 | em uso |
-| `[` / `]` | Inspeção: alvo anterior / próximo, em ciclo por todos os alvos (hoje onze; cadeira após a lixeira e quadro ao final), sem limite de teclas numéricas | `scene/classroom` | CG-60, CG-61 | em uso |
+| `1`, `2`–`9` | Inspeção: sala inteira / os oito primeiros alvos, por autor. `2` = ventilador, `3` = cadeira, `4` = quadro (Victor); `5` = carteira, `6` = lâmpada, `7` = interruptor, `8` = mesa do professor (José); `9` = tela retrátil (Erasmo) | `scene/classroom` | CG-55, CG-87, CG-59, CG-60, CG-61, CG-62, CG-63, CG-64, CG-66 | em uso |
+| `[` / `]` | Inspeção: alvo anterior / próximo, em ciclo por todos os alvos (hoje dez; projetor e lixeira depois da tela, ao final), sem limite de teclas numéricas | `scene/classroom` | CG-60, CG-61 | em uso |
 | `T` | Tela retrátil: abre / recolhe (a tela começa recolhida) | `scene/classroom` | CG-75 | em uso |
 | `V` | Ventilador: liga / desliga (acelera ao ligar, desacelera até parar ao desligar) | `scene/classroom` | CG-76 | em uso |
 | `Shift` + `V` | Ventilador: troca a velocidade (2, 3, 4 voltas/s), também com ele desligado | `scene/classroom` | CG-76 | em uso |
@@ -163,7 +163,7 @@ no mesmo PR.** "Reservada" é a sugestão para a task; o responsável pode troca
 | `L` | Luz: liga / desliga (a sala começa acesa) | `scene/classroom` | CG-73 | em uso |
 
 As seleções funcionam com o cursor livre e reenquadram a câmera. Após uma tecla numérica, `[` e `]` continuam
-do alvo selecionado. Da sala inteira, `]` seleciona o primeiro alvo (carteira) e `[` o último (quadro, 11º alvo);
+do alvo selecionado. Da sala inteira, `]` seleciona o primeiro alvo (ventilador) e `[` o último (lixeira, 10º alvo);
 o ciclo retorna do último ao primeiro e vice-versa. A tecla `1` restaura a cena completa.
 
 Revisão técnica da CG-68 no fechamento dos materiais de Victor: nenhuma correção de navegação foi necessária.
