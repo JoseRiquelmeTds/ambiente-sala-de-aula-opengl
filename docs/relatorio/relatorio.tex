@@ -26,8 +26,6 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta}
 \usepackage{csquotes}
-\usepackage[style=abnt,backend=biber]{biblatex}  % NBR 6023 e citação autor-data da NBR 10520:2023
-\addbibresource{referencias.bib}
 
 % --- Margens (manual UFAL, Figura 2): 3 cm superior e esquerda, 2 cm inferior e direita
 \setlrmarginsandblock{3cm}{2cm}{*}
@@ -47,7 +45,6 @@
 % O babel redefine os nomes ao iniciar o documento: a troca vai para \captionsbrazil.
 \addto\captionsbrazil{%
   \renewcommand{\tablename}{Quadro}%
-  \renewcommand{\listtablename}{Lista de quadros}%
 }
 \renewcommand{\lstlistingname}{Código}
 \renewcommand{\lstlistlistingname}{Lista de códigos}
@@ -98,7 +95,6 @@ Universidade Federal de Alagoas, como requisito parcial para a avaliação da AB
   pdfkeywords={OpenGL}{computação gráfica}{transformações geométricas}{iluminação}{textura projetiva},
   colorlinks=true,
   linkcolor=black,
-  citecolor=black,
   urlcolor=black,
   bookmarksdepth=4,
 }
@@ -135,50 +131,8 @@ Universidade Federal de Alagoas, como requisito parcial para a avaliação da AB
 \imprimircapa
 \imprimirfolhaderosto
 
-\begin{resumo}
-Este relatório descreve o projeto da AB2 de Computação Gráfica: uma sala de aula tridimensional navegável,
-escrita em C++17 com OpenGL 3.3 no perfil core, GLFW, GLAD, GLM e stb\_image. A sala de 8 × 3 × 7 m reúne
-carteiras, cadeiras, quadro, mesa do professor, luminárias com interruptor, ventilador de parede, projetor,
-tela retrátil e lixeira, todos modelados no código a partir de primitivas e organizados num grafo de cena
-hierárquico. A cena é iluminada pelo modelo de Blinn-Phong por fragmento, com luzes pontuais atenuadas, luz
-direcional de preenchimento, materiais por peça e texturas. O usuário navega com câmera livre (teclado e
-mouse), inspeciona cada objeto isoladamente e interage com a sala: liga e desliga as luzes, abre a tela
-retrátil, liga o ventilador e o projetor e troca os slides. As três transformações pedidas na avaliação são
-detalhadas com suas matrizes: a escala em Y com pivô no topo da lona da tela retrátil, a rotação das pás do
-ventilador em torno do eixo do motor, integrada no tempo, e a projeção do slide por textura projetiva, em
-que o projetor é tratado como uma segunda câmera. O projeto compila com CMake e g++ no Windows
-(MinGW-w64) e no Linux, com as bibliotecas embutidas no repositório, e o build limpo foi verificado em três
-sistemas.
-
-\textbf{Palavras-chave}: computação gráfica; OpenGL; transformações geométricas; iluminação; textura projetiva.
-\end{resumo}
-
-\begin{resumo}[Abstract]
-\begin{otherlanguage*}{english}
-This report describes the second assessment (AB2) project of the Computer Graphics course: a navigable 3D
-classroom written in C++17 with core-profile OpenGL 3.3, GLFW, GLAD, GLM and stb\_image. The
-8 × 3 × 7 m room contains student desks, chairs, a whiteboard, a teacher's desk, ceiling lamps with a wall
-switch, a wall fan, a projector, a retractable screen and a trash can, all modeled in code from primitives
-and arranged in a hierarchical scene graph. The scene is lit with per-fragment Blinn-Phong shading,
-attenuated point lights, a directional fill light, per-part materials and textures. The user moves a free
-camera with keyboard and mouse, inspects each object in isolation and interacts with the room: switching
-the lights, opening the screen, turning on the fan and the projector and changing slides. The three
-transformations required by the assessment are detailed with their matrices: a Y scale pivoted at the top of
-the screen canvas, the rotation of the fan blades around the motor axis integrated over time, and the slide
-projection through projective texture mapping, which treats the projector as a second camera. The project
-builds with CMake and g++ on Windows (MinGW-w64) and Linux with bundled libraries, and a clean build was
-verified on three systems.
-
-\textbf{Keywords}: computer graphics; OpenGL; geometric transformations; lighting; projective texture mapping.
-\end{otherlanguage*}
-\end{resumo}
-
 \pdfbookmark[0]{\listfigurename}{lof}
 \listoffigures*
-\cleardoublepage
-
-\pdfbookmark[0]{\listtablename}{lot}
-\listoftables*
 \cleardoublepage
 
 \pdfbookmark[0]{\lstlistlistingname}{lol}
@@ -226,13 +180,13 @@ detalha as três transformações. O \autoref{cap:iluminacao} trata da iluminaç
 \autoref{cap:camera}, da câmera e da interação. Os resultados estão no \autoref{cap:resultados}; a compilação,
 no \autoref{cap:compilacao}; a divisão de tarefas, no \autoref{cap:equipe}. O \autoref{cap:conclusao} conclui
 o relatório. A lista completa de comandos está no Apêndice~\ref{ap:comandos}. O texto segue o manual de
-normalização da UFAL \cite{ufal2025}.
+normalização da UFAL.
 
 % -----------------------------------------------------------------------------
 \chapter{Tecnologias}
 \label{cap:tecnologias}
 
-O programa é escrito em C++17 e usa o OpenGL 3.3 no perfil \emph{core} \cite{segal2010}, que exige o
+O programa é escrito em C++17 e usa o OpenGL 3.3 no perfil \emph{core}, que exige o
 pipeline programável: não há \texttt{glBegin}/\texttt{glEnd} nem pilha de matrizes do pipeline fixo. Toda
 geometria vai para a GPU em \emph{buffers} (VAO, VBO e EBO) e é desenhada por um par de shaders GLSL
 (\texttt{shaders/basic.vert} e \texttt{shaders/basic.frag}). As matrizes são calculadas na CPU e enviadas
@@ -251,10 +205,10 @@ o que simplifica a compilação em máquinas diferentes.
     \hline
     \textbf{Biblioteca} & \textbf{Uso no projeto} \\
     \hline
-    GLFW 3.5.1 \cite{glfw} & Janela, contexto OpenGL, teclado, mouse e foco \\
-    GLAD \cite{glad} & Carrega as funções do OpenGL 3.3 core fornecidas pelo driver \\
-    GLM 1.0.3 \cite{glm} & Vetores, matrizes, \texttt{lookAt}, \texttt{perspective}, \texttt{rotate}, \texttt{scale} \\
-    stb\_image \cite{stb} & Leitura das texturas PNG \\
+    GLFW 3.5.1 & Janela, contexto OpenGL, teclado, mouse e foco \\
+    GLAD & Carrega as funções do OpenGL 3.3 core fornecidas pelo driver \\
+    GLM 1.0.3 & Vetores, matrizes, \texttt{lookAt}, \texttt{perspective}, \texttt{rotate}, \texttt{scale} \\
+    stb\_image & Leitura das texturas PNG \\
     \hline
   \end{tabularx}
   \fonteautores
@@ -439,7 +393,7 @@ enquadra a câmera num exemplar.
 \chapter{Transformações geométricas}
 \label{cap:transformacoes}
 
-As três transformações usam matrizes 4 × 4 em coordenadas homogêneas \cite{shirley2016}. Um ponto
+As três transformações usam matrizes 4 × 4 em coordenadas homogêneas. Um ponto
 $\mathbf{p} = (x, y, z, 1)^T$ é transformado por $\mathbf{p}' = M\mathbf{p}$ e, num produto $M = A \cdot B$,
 a matriz da direita é aplicada primeiro. As matrizes de translação, escala e rotação em torno de Z são:
 \begin{equation}
@@ -560,7 +514,7 @@ A 20 voltas/s seriam 120° por quadro, e as pás pareceriam paradas.
 \label{sec:projecao}
 
 O slide não é uma textura colada na lona. O projetor é tratado como uma luz que carrega uma imagem, pela
-técnica de textura projetiva \cite{segal1992}: cada fragmento da cena descobre em que ponto da imagem do
+técnica de textura projetiva: cada fragmento da cena descobre em que ponto da imagem do
 projetor ele está e recebe a luz daquele texel. A imagem cai onde o feixe bater: na lona aberta, ou no quadro e
 na parede com a tela recolhida.
 
@@ -666,7 +620,7 @@ sala), e um objeto à frente do projetor recebe a imagem sem fazer sombra na tel
 
 \section{Modelo de Blinn-Phong}
 
-A cor é calculada por fragmento no fragment shader, com o modelo de Blinn-Phong \cite{phong1975,blinn1977}.
+A cor é calculada por fragmento no fragment shader, com o modelo de Blinn-Phong.
 Com $\mathbf{N}$ a normal, $\mathbf{L}$ a direção para a luz, $\mathbf{V}$ a direção para a câmera e
 $\mathbf{H} = \mathrm{normalize}(\mathbf{L} + \mathbf{V})$, todos unitários:
 \begin{equation}
@@ -678,8 +632,7 @@ em que $\mathbf{e}$ é a cor emissiva, $\mathbf{a}$ a difusa (albedo), $\mathbf{
 brilho, $\mathbf{c}_i$ a cor da luz e $f_i$ a atenuação. O termo especular é zerado quando
 $\mathbf{N}\cdot\mathbf{L} \le 0$, e os vetores que podem ser nulos são protegidos por um $\varepsilon = 10^{-4}$.
 O Blinn-Phong foi preferido ao Phong original porque o reflexo enfraquece suavemente em ângulos abertos, sem a
-borda que $\mathbf{R}\cdot\mathbf{V}$ produz ao ficar negativo, e porque é mais barato
-\cite{akenine2018}.
+borda que $\mathbf{R}\cdot\mathbf{V}$ produz ao ficar negativo, e porque é mais barato.
 
 A sala tem quatro luzes pontuais, uma por luminária, com atenuação
 \begin{equation}
@@ -723,8 +676,7 @@ A direção de visão é
   \mathbf{f} = (\cos\psi\cos\phi,\ \sin\phi,\ \sin\psi\cos\phi),
 \end{equation}
 e a matriz de visualização é $\mathrm{lookAt}(\mathbf{p}, \mathbf{p} + \mathbf{f}, \hat{\mathbf{y}})$. A
-projeção é perspectiva, com 60° de abertura vertical, plano próximo a 0,1~m e distante a 100~m
-\cite{devries2020}. O mouse altera os ângulos a 0,1° por pixel, e a arfagem fica limitada a ±89°: em 90°,
+projeção é perspectiva, com 60° de abertura vertical, plano próximo a 0,1~m e distante a 100~m. O mouse altera os ângulos a 0,1° por pixel, e a arfagem fica limitada a ±89°: em 90°,
 $\mathbf{f}$ ficaria paralelo ao vetor ``cima'' e o \texttt{lookAt} não teria como definir a direita. As teclas
 \texttt{W}, \texttt{A}, \texttt{S} e \texttt{D} movem a câmera a 2~m/s no plano da visão e \texttt{Espaço} e
 \texttt{Ctrl} a sobem e descem; o deslocamento combinado é normalizado, para a diagonal não ser mais rápida.
@@ -854,8 +806,6 @@ iluminação apenas local, sem luz rebatida.
 %  Elementos pós-textuais
 % =============================================================================
 \postextual
-
-\printbibliography[title={Referências}]
 
 \begin{apendicesenv}
 
